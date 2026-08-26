@@ -51,4 +51,22 @@ O Unioff é uma plataforma de benefícios estudantis que conecta estudantes a es
 - Resgate de benefícios
 - Painel administrativo para gerenciamento da plataforma
 
+
+## Arquitetura do Sistema
+
+O sistema utiliza uma arquitetura em camadas, promovendo a separação de responsabilidades e facilitando a manutenção e evolução da aplicação.
+
+### Backend
+
+```text
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Banco de Dados (PostgreSQL)
+```
+
+### Frontend (a definir)
 ---
