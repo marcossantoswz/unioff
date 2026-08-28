@@ -9,10 +9,10 @@ O Unioff é uma plataforma de benefícios estudantis que conecta estudantes a es
 
 | Nome | Papel |
 |--------|--------|
-| Gabriel Ribeiro Irala | a definir |
-| Leonardo Barreto | a definir |
-| Marcos Aurélio Santos | a definir |
-| Marcelo Eugênio Campos | a definir |
+| Gabriel Ribeiro Irala | Full Stack |
+| Leonardo Barreto | Full Stack |
+| Marcos Aurélio Santos | Full Stack |
+| Marcelo Eugênio Campos | Full Stack |
 
 ---
 
@@ -38,7 +38,7 @@ O Unioff é uma plataforma de benefícios estudantis que conecta estudantes a es
 ### Ferramentas e Agentes de IA
 
 - Antigravity
-- ChatGPT
+- Codex
 
 ---
 
@@ -70,3 +70,26 @@ Banco de Dados (PostgreSQL)
 
 ### Frontend (a definir)
 ---
+
+##Histórias de usuários
+
+- COMO ESTUDANTE, QUERO criar uma conta na plataforma,PARA acessar os beneficios oferecidos pelas empresas parceiras.
+- COMO EMPRESA, QUERO criar uma conta na plataforma, PARA cadastrar meu estabelecimento e divulgar beneficios.
+- COMO EMPRESA, QUERO cadastrar meu estabelecimento, PARA divulgar meus beneficios aos estudantes.
+- COMO USUARIO, QUERO realizar login na plataforma.
+- COMO ESTUDANTE, QUERO visualizar os detalhes de uma empresa, PARA conhecer os beneficios, a localizacao e as formas de contato.
+- COMO EMPRESA, QUERO atualizar minhas informacoes.
+- COMO ESTUDANTE, QUERO visualizar os beneficios disponiveis, PARA encontrar descontos do meu interesse.
+- COMO ESTUDANTE, QUERO pesquisar beneficios por nome da empresa ou beneficio, PARA encontrar ofertas rapidamente.
+- COMO EMPRESA, QUERO cadastrar beneficios, PARA atrair novos estudantes para meu estabelecimento.
+- COMO EMPRESA, QUERO editar beneficios.
+- COMO EMPRESA,QUERO remover beneficios.
+- COMO ESTUDANTE, QUERO resgatar um beneficio, PARA utiliza-lo em um estabelecimento parceiro.
+- COMO ESTUDANTE, QUERO visualizar meu historico de resgates, PARA acompanhar os beneficios que ja utilizei.
+- COMO EMPRESA, QUERO validar um cupom resgatado, PARA garantir que o beneficio seja utilizado apenas uma vez.
+- COMO EMPRESA, QUERO visualizar quantos beneficios foram resgatados, PARA acompanhar o impacto da plataforma no meu negocio.
+- COMO ADMINISTRADOR, QUERO desativar empresas ou beneficios que violem as regras, PARA manter a confiabilidade da plataforma.
+- 
+
+
+
