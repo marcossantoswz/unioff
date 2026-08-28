@@ -71,7 +71,7 @@ Banco de Dados (PostgreSQL)
 ### Frontend (a definir)
 ---
 
-##Histórias de usuários
+## Histórias de usuários
 
 - COMO ESTUDANTE, QUERO criar uma conta na plataforma,PARA acessar os beneficios oferecidos pelas empresas parceiras.
 - COMO EMPRESA, QUERO criar uma conta na plataforma, PARA cadastrar meu estabelecimento e divulgar beneficios.
