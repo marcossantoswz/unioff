@@ -119,7 +119,7 @@ Relacionamento 1:1 com `Usuario`, ID compartilhado via `@MapsId`. Cada unidade/f
 | `dataFim`       | LocalDate   | Data limite de validade da promoção | Opcional |
 | `ativo`         | boolean     | Define se o benefício está disponível/visível para os estudantes | Default: `true` |
 | `empresa`       | Empresa     | Estabelecimento dono do benefício | Relacionamento `@ManyToOne`, obrigatório |
-| `cupom`         | List<Cupom> | Cupons gerados por estudantes para este benefício | Relacionamento `@OneToMany(mappedBy = "beneficio")` |
+| `cupons`        | List<Cupom> | Cupons gerados por estudantes para este benefício | Relacionamento `@OneToMany(mappedBy = "beneficio")` |
 
 ### 5. Cupom
 | Atributo | Tipo (Java) | Descrição | Regras |
