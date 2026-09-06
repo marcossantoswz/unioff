@@ -132,6 +132,42 @@ Relacionamento 1:1 com `Usuario`, ID compartilhado via `@MapsId`. Cada unidade/f
 | `estudante` | Estudante | Quem gerou o cupom | `@ManyToOne`, obrigatório |
 | `beneficio` | Beneficio | Qual benefício foi resgatado | `@ManyToOne`, obrigatório |
 
+## Repository
+
+Interfaces responsáveis pelo acesso a dados, seguindo o padrão do Spring Data JPA. Cada uma estende `JpaRepository<Entidade, TipoDoId>`, o que já fornece automaticamente, sem necessidade de implementação:
+
+- `save(entidade)` — insere ou atualiza um registro
+- `findById(id)` — busca por chave primária, retorna `Optional`
+- `findAll()` — retorna todos os registros
+- `deleteById(id)` — remove por chave primária
+- `existsById(id)` — verifica existência por chave primária
+- `count()` — conta o total de registros
+
+Para acessos mais especifícas, cada repository implementa **query methods** para cada entidade, métodos cuja consulta é gerada automaticamente pelo Spring a partir do nome do método:
+
+### `UsuarioRepository`
+| Método | Descrição |
+|---|---|
+| `findByEmail(String email)` | Busca um usuário pelo e-mail — usado no login/autenticação (Spring Security) |
+| `existsByEmail(String email)` | Verifica duplicidade de e-mail antes do cadastro |
+
+### `EstudanteRepository`
+| Método | Descrição |
+|---|---|
+| `existsByMatricula(String matricula)` | Verifica duplicidade de matrícula antes do cadastro |
+
+### `EmpresaRepository`
+| Método | Descrição |
+|---|---|
+| `existsByCnpj(String cnpj)` | Verifica duplicidade de CNPJ antes do cadastro |
+
+### `CupomRepository`
+| Método | Descrição                                                                                                      |
+|---|----------------------------------------------------------------------------------------------------------------|
+| `findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId)` | Lista o histórico de cupons de um estudante, do mais recente para o mais antigo da rota `GET /api/resgates/me` |
+
+> `BeneficioRepository` existe no projeto mas ainda não tem métodos customizados — nenhuma rota implementada até o momento precisa filtrar/listar benefícios além do que `JpaRepository` já oferece.
+
 ### Frontend (a definir)
 ---
 
