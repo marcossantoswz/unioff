@@ -19,6 +19,9 @@ public class EmpresaService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private com.unioff.repository.BeneficioRepository beneficioRepository;
+
     public EmpresaResponseDTO getMinhaEmpresa(String email) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
                 .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
@@ -81,6 +84,31 @@ public class EmpresaService {
         dto.setNumero(empresa.getNumero());
         dto.setTelephoneWhatsapp(empresa.getTelephoneWhatsapp());
         dto.setSite(empresa.getSite());
+        return dto;
+    }
+
+    public org.springframework.data.domain.Page<com.unioff.dto.BeneficioResponseDTO> getBeneficiosDaEmpresa(
+            String email, Boolean ativo, Boolean esgotado, org.springframework.data.domain.Pageable pageable) {
+        
+        return beneficioRepository.findBeneficiosDaEmpresa(email, ativo, esgotado, pageable)
+                .map(this::mapBeneficioToDTO);
+    }
+
+    private com.unioff.dto.BeneficioResponseDTO mapBeneficioToDTO(com.unioff.entity.Beneficio beneficio) {
+        com.unioff.dto.BeneficioResponseDTO dto = new com.unioff.dto.BeneficioResponseDTO();
+        dto.setId(beneficio.getId());
+        dto.setTitulo(beneficio.getTitulo());
+        dto.setDescricao(beneficio.getDescricao());
+        dto.setDataInicio(beneficio.getDataInicio());
+        dto.setDataFim(beneficio.getDataFim());
+        dto.setQuantidadeResgates(beneficio.getQuantidadeResgates());
+        dto.setQuantidadeMaxResgastes(beneficio.getQuantidadeMaxResgastes());
+        dto.setAtivo(beneficio.isAtivo());
+        
+        int disponivel = beneficio.getQuantidadeMaxResgastes() - beneficio.getQuantidadeResgates();
+        dto.setQuantidadeDisponivel(Math.max(0, disponivel));
+        dto.setEsgotado(beneficio.getQuantidadeResgates() >= beneficio.getQuantidadeMaxResgastes());
+        
         return dto;
     }
 }
