@@ -53,4 +53,24 @@ public class EmpresaController {
                 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping
+    public ResponseEntity<org.springframework.data.domain.Page<EmpresaResponseDTO>> listarEmpresas(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String cidade,
+            @RequestParam(required = false) String bairro,
+            org.springframework.data.domain.Pageable pageable) {
+        
+        org.springframework.data.domain.Page<EmpresaResponseDTO> response = 
+                empresaService.listarEmpresas(nome, cidade, bairro, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{empresaId}")
+    public ResponseEntity<com.unioff.dto.EmpresaDetalhesDTO> visualizarDetalhesEmpresa(
+            @PathVariable java.util.UUID empresaId) {
+        
+        com.unioff.dto.EmpresaDetalhesDTO response = empresaService.getDetalhesEmpresa(empresaId);
+        return ResponseEntity.ok(response);
+    }
 }
