@@ -73,4 +73,13 @@ public class EmpresaController {
         com.unioff.dto.EmpresaDetalhesDTO response = empresaService.getDetalhesEmpresa(empresaId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/me/metricas")
+    public ResponseEntity<com.unioff.dto.MetricasEmpresaDTO> getMinhasMetricas(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
+        com.unioff.dto.MetricasEmpresaDTO response = empresaService.getMetricas(principal.getName());
+        return ResponseEntity.ok(response);
+    }
 }
