@@ -29,18 +29,17 @@ public class Beneficio {
     @Column(nullable = false)
     private String descricao;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_desconto", nullable = false)
-    private TipoDesconto tipoDesconto;
-
-    @Column(name = "valor_desconto")
-    private BigDecimal valorDesconto;
-
     @Column(name = "data_inicio")
     private LocalDate dataInicio;
 
     @Column(name = "data_fim")
     private LocalDate dataFim;
+
+    @Column(name = "quantidade_resgates", nullable = false)
+    private Integer quantidadeResgates = 0;
+
+    @Column(name = "quantidade_max_resgastes", nullable = false)
+    private Integer quantidadeMaxResgastes;
 
     @Column(nullable = false)
     private boolean ativo = true;
