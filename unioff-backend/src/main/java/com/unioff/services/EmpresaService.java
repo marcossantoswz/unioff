@@ -111,4 +111,39 @@ public class EmpresaService {
         
         return dto;
     }
+
+    public org.springframework.data.domain.Page<EmpresaResponseDTO> listarEmpresas(
+            String nome, String cidade, String bairro, org.springframework.data.domain.Pageable pageable) {
+        return empresaRepository.findByFiltros(nome, cidade, bairro, pageable)
+                .map(this::mapToDTO);
+    }
+
+    public com.unioff.dto.EmpresaDetalhesDTO getDetalhesEmpresa(java.util.UUID empresaId) {
+        Empresa empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+        
+        com.unioff.dto.EmpresaDetalhesDTO dto = new com.unioff.dto.EmpresaDetalhesDTO();
+        dto.setId(empresa.getId());
+        if (empresa.getUsuario() != null) {
+            dto.setUsuarioId(empresa.getUsuario().getId());
+            dto.setNome(empresa.getUsuario().getNome());
+            dto.setEmail(empresa.getUsuario().getEmail());
+        }
+        dto.setNomeFantasia(empresa.getNomeFantasia());
+        dto.setDescricao(empresa.getDescricao());
+        dto.setCidade(empresa.getCidade());
+        dto.setBairro(empresa.getBairro());
+        dto.setLogradouro(empresa.getLogradouro());
+        dto.setNumero(empresa.getNumero());
+        dto.setTelephoneWhatsapp(empresa.getTelephoneWhatsapp());
+        dto.setSite(empresa.getSite());
+        
+        if (empresa.getBeneficios() != null) {
+            java.util.List<com.unioff.dto.BeneficioResponseDTO> beneficiosDTO = empresa.getBeneficios().stream()
+                    .map(this::mapBeneficioToDTO)
+                    .collect(java.util.stream.Collectors.toList());
+            dto.setBeneficios(beneficiosDTO);
+        }
+        return dto;
+    }
 }
