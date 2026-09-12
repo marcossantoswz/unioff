@@ -146,4 +146,64 @@ public class EmpresaService {
         }
         return dto;
     }
+
+    @Autowired
+    private com.unioff.repository.CupomRepository cupomRepository;
+
+    @Transactional(readOnly = true)
+    public com.unioff.dto.MetricasEmpresaDTO getMetricas(String email) {
+        Empresa empresa = empresaRepository.findByUsuarioEmail(email)
+                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+
+        com.unioff.dto.MetricasEmpresaDTO metricas = new com.unioff.dto.MetricasEmpresaDTO();
+        metricas.setEmpresaId(empresa.getId());
+        metricas.setNomeFantasia(empresa.getNomeFantasia());
+
+        java.util.List<Object[]> cuponsUsadosPorBeneficio = cupomRepository.countCuponsPorBeneficioStatus(empresa.getId(), com.unioff.entity.StatusCupom.USADO);
+        java.util.Map<java.util.UUID, Long> mapUsados = new java.util.HashMap<>();
+        for (Object[] row : cuponsUsadosPorBeneficio) {
+            mapUsados.put((java.util.UUID) row[0], ((Number) row[1]).longValue());
+        }
+
+        long totalBeneficios = 0;
+        long totalBeneficiosAtivos = 0;
+        long totalResgates = 0;
+        long totalCuponsUtilizados = 0;
+
+        java.util.List<com.unioff.dto.MetricasBeneficioDTO> listaBeneficios = new java.util.ArrayList<>();
+
+        if (empresa.getBeneficios() != null) {
+            totalBeneficios = empresa.getBeneficios().size();
+            for (com.unioff.entity.Beneficio b : empresa.getBeneficios()) {
+                if (b.isAtivo()) {
+                    totalBeneficiosAtivos++;
+                }
+                totalResgates += b.getQuantidadeResgates();
+                
+                long usados = mapUsados.getOrDefault(b.getId(), 0L);
+                totalCuponsUtilizados += usados;
+
+                com.unioff.dto.MetricasBeneficioDTO mb = new com.unioff.dto.MetricasBeneficioDTO();
+                mb.setBeneficioId(b.getId());
+                mb.setTitulo(b.getTitulo());
+                mb.setQuantidadeResgates(b.getQuantidadeResgates());
+                mb.setQuantidadeMaxResgastes(b.getQuantidadeMaxResgastes());
+                
+                int disponivel = b.getQuantidadeMaxResgastes() - b.getQuantidadeResgates();
+                mb.setQuantidadeDisponivel(Math.max(0, disponivel));
+                mb.setEsgotado(b.getQuantidadeResgates() >= b.getQuantidadeMaxResgastes());
+                mb.setQuantidadeCuponsUtilizados(usados);
+
+                listaBeneficios.add(mb);
+            }
+        }
+
+        metricas.setTotalBeneficios(totalBeneficios);
+        metricas.setTotalBeneficiosAtivos(totalBeneficiosAtivos);
+        metricas.setTotalResgates(totalResgates);
+        metricas.setTotalCuponsUtilizados(totalCuponsUtilizados);
+        metricas.setBeneficios(listaBeneficios);
+
+        return metricas;
+    }
 }
