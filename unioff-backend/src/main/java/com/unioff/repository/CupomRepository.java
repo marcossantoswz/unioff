@@ -17,4 +17,7 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
     List<Object[]> countCuponsPorBeneficioStatus(
             @Param("empresaId") UUID empresaId, 
             @Param("status") StatusCupom status);
+
+    List<Cupom> findByEstudanteIdOrderByDataCupomDesc(UUID estudanteId);
 }
+

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.util.UUID;
 
 @Entity
@@ -18,16 +19,12 @@ public class Estudante {
     @Id
     private UUID id;
 
-    @Column(name = "nome_estudante", nullable = false)
-    private String nomeEstudante;
-
-    @Column(nullable = false, unique = true)
-    private String matricula;
-
     @Column(nullable = false)
     private String instituicao;
 
-    private String endereco;
+    private String curso;
+
+    private String matricula;
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId

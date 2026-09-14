@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -26,28 +27,34 @@ public class Usuario implements UserDetails {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Column(nullable = false)
+    private String nome;
+
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "senha_hash", nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String senha;
+    private String senhaHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_perfil", nullable = false)
-    private TipoPerfil tipoPerfil;
+    @Column(name = "tipo_usuario", nullable = false)
+    private TipoUsuario tipoUsuario;
 
     @Column(nullable = false)
     private boolean ativo = true;
 
+    @Column(name = "data_criacao")
+    private LocalDateTime dataCriacao = LocalDateTime.now();
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + tipoPerfil.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + tipoUsuario.name()));
     }
 
     @Override
     public String getPassword() {
-        return senha;
+        return senhaHash;
     }
 
     @Override
