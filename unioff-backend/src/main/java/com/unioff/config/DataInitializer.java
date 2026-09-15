@@ -86,6 +86,42 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println("Dados fictícios de empresa criados com sucesso: empresa@teste.com / senha123");
         }
 
+        // Create an Estudante user if it doesn't exist
+        if (usuarioRepository.findByEmail("estudante@teste.com").isEmpty()) {
+            Usuario usuarioEstudante = new Usuario();
+            usuarioEstudante.setNome("Marcos Aurelio Santos");
+            usuarioEstudante.setEmail("estudante@teste.com");
+            usuarioEstudante.setSenhaHash(passwordEncoder.encode("senha123"));
+            usuarioEstudante.setTipoUsuario(TipoUsuario.ESTUDANTE);
+            usuarioEstudante.setAtivo(true);
+            usuarioRepository.save(usuarioEstudante);
+
+            Estudante estudante = new Estudante();
+            estudante.setUsuario(usuarioEstudante);
+            estudante.setInstituicao("Unicamp");
+            estudante.setCurso("Engenharia da Computação");
+            estudante.setMatricula("123456");
+            estudanteRepository.save(estudante);
+            
+            // Add a test coupon (Resgate) for the first benefit found
+            List<Beneficio> beneficios = beneficioRepository.findAll();
+            if (!beneficios.isEmpty()) {
+                Beneficio b = beneficios.get(0);
+                Cupom cupom = new Cupom();
+                cupom.setCodigo("UNI-A8KX91");
+                cupom.setStatus(StatusCupom.USADO);
+                cupom.setDataGeracao(LocalDateTime.now().minusDays(2));
+                cupom.setDataUso(LocalDateTime.now().minusDays(1));
+                cupom.setEstudante(estudante);
+                cupom.setBeneficio(b);
+                cupomRepository.save(cupom);
+                
+                b.setQuantidadeResgates(b.getQuantidadeResgates() + 1);
+                beneficioRepository.save(b);
+            }
+
+            System.out.println("Dados fictícios de estudante criados com sucesso: estudante@teste.com / senha123");
+        }
         
     }
 }
