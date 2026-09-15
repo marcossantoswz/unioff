@@ -23,6 +23,7 @@ import com.unioff.dto.EmpresaResponseDTO;
 import com.unioff.dto.EmpresaUpdateDTO;
 import com.unioff.entity.Empresa;
 import com.unioff.entity.Usuario;
+import com.unioff.exceptions.EmpresaNotFoundException;
 import com.unioff.repository.EmpresaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,14 +43,14 @@ public class EmpresaService {
 
     public EmpresaResponseDTO getMinhaEmpresa(String email) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
-                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+                .orElseThrow(() -> new EmpresaNotFoundException("Empresa não encontrada"));
         return mapToDTO(empresa);
     }
 
     @Transactional
     public EmpresaResponseDTO updateMinhaEmpresa(String email, EmpresaUpdateDTO dto) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
-                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+                .orElseThrow(() -> new EmpresaNotFoundException("Empresa não encontrada"));
         Usuario usuario = empresa.getUsuario();
 
         if (dto.getNome() != null) {
@@ -138,7 +139,7 @@ public class EmpresaService {
 
     public EmpresaDetalhesDTO getDetalhesEmpresa(UUID empresaId) {
         Empresa empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+                .orElseThrow(() -> new EmpresaNotFoundException("Empresa não encontrada"));
         
         EmpresaDetalhesDTO dto = new EmpresaDetalhesDTO();
         dto.setId(empresa.getId());
@@ -171,7 +172,7 @@ public class EmpresaService {
     @Transactional(readOnly = true)
     public MetricasEmpresaDTO getMetricas(String email) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
-                .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
+                .orElseThrow(() -> new EmpresaNotFoundException("Empresa não encontrada"));
 
         MetricasEmpresaDTO metricas = new MetricasEmpresaDTO();
         metricas.setEmpresaId(empresa.getId());
