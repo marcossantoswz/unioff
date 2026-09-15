@@ -1,5 +1,13 @@
 package com.unioff.controller;
 
+import com.unioff.dto.BeneficioResponseDTO;
+import com.unioff.dto.EmpresaDetalhesDTO;
+import com.unioff.dto.MetricasEmpresaDTO;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+
 import com.unioff.dto.EmpresaResponseDTO;
 import com.unioff.dto.EmpresaUpdateDTO;
 import com.unioff.services.EmpresaService;
@@ -38,48 +46,48 @@ public class EmpresaController {
     }
 
     @GetMapping("/me/beneficios")
-    public ResponseEntity<org.springframework.data.domain.Page<com.unioff.dto.BeneficioResponseDTO>> getMeusBeneficios(
+    public ResponseEntity<Page<BeneficioResponseDTO>> getMeusBeneficios(
             Principal principal,
             @RequestParam(required = false) Boolean ativo,
             @RequestParam(required = false) Boolean esgotado,
-            org.springframework.data.domain.Pageable pageable) {
+            Pageable pageable) {
         
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
         
-        org.springframework.data.domain.Page<com.unioff.dto.BeneficioResponseDTO> response = 
+        Page<BeneficioResponseDTO> response = 
                 empresaService.getBeneficiosDaEmpresa(principal.getName(), ativo, esgotado, pageable);
                 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
-    public ResponseEntity<org.springframework.data.domain.Page<EmpresaResponseDTO>> listarEmpresas(
+    public ResponseEntity<Page<EmpresaResponseDTO>> listarEmpresas(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String cidade,
             @RequestParam(required = false) String bairro,
-            org.springframework.data.domain.Pageable pageable) {
+            Pageable pageable) {
         
-        org.springframework.data.domain.Page<EmpresaResponseDTO> response = 
+        Page<EmpresaResponseDTO> response = 
                 empresaService.listarEmpresas(nome, cidade, bairro, pageable);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{empresaId}")
-    public ResponseEntity<com.unioff.dto.EmpresaDetalhesDTO> visualizarDetalhesEmpresa(
-            @PathVariable java.util.UUID empresaId) {
+    public ResponseEntity<EmpresaDetalhesDTO> visualizarDetalhesEmpresa(
+            @PathVariable UUID empresaId) {
         
-        com.unioff.dto.EmpresaDetalhesDTO response = empresaService.getDetalhesEmpresa(empresaId);
+        EmpresaDetalhesDTO response = empresaService.getDetalhesEmpresa(empresaId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/me/metricas")
-    public ResponseEntity<com.unioff.dto.MetricasEmpresaDTO> getMinhasMetricas(Principal principal) {
+    public ResponseEntity<MetricasEmpresaDTO> getMinhasMetricas(Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(401).build();
         }
-        com.unioff.dto.MetricasEmpresaDTO response = empresaService.getMetricas(principal.getName());
+        MetricasEmpresaDTO response = empresaService.getMetricas(principal.getName());
         return ResponseEntity.ok(response);
     }
 }

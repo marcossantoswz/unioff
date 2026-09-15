@@ -1,11 +1,29 @@
 package com.unioff.services;
 
+import com.unioff.dto.BeneficioResponseDTO;
+import com.unioff.dto.EmpresaDetalhesDTO;
+import com.unioff.dto.MetricasBeneficioDTO;
+import com.unioff.dto.MetricasEmpresaDTO;
+import com.unioff.entity.Beneficio;
+import com.unioff.entity.StatusCupom;
+import com.unioff.repository.BeneficioRepository;
+import com.unioff.repository.CupomRepository;
+import com.unioff.repository.UsuarioRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+
 import com.unioff.dto.EmpresaResponseDTO;
 import com.unioff.dto.EmpresaUpdateDTO;
 import com.unioff.entity.Empresa;
 import com.unioff.entity.Usuario;
 import com.unioff.repository.EmpresaRepository;
-import com.unioff.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +38,7 @@ public class EmpresaService {
     private UsuarioRepository usuarioRepository;
 
     @Autowired
-    private com.unioff.repository.BeneficioRepository beneficioRepository;
+    private BeneficioRepository beneficioRepository;
 
     public EmpresaResponseDTO getMinhaEmpresa(String email) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
@@ -87,15 +105,15 @@ public class EmpresaService {
         return dto;
     }
 
-    public org.springframework.data.domain.Page<com.unioff.dto.BeneficioResponseDTO> getBeneficiosDaEmpresa(
-            String email, Boolean ativo, Boolean esgotado, org.springframework.data.domain.Pageable pageable) {
+    public Page<BeneficioResponseDTO> getBeneficiosDaEmpresa(
+            String email, Boolean ativo, Boolean esgotado, Pageable pageable) {
         
         return beneficioRepository.findBeneficiosDaEmpresa(email, ativo, esgotado, pageable)
                 .map(this::mapBeneficioToDTO);
     }
 
-    private com.unioff.dto.BeneficioResponseDTO mapBeneficioToDTO(com.unioff.entity.Beneficio beneficio) {
-        com.unioff.dto.BeneficioResponseDTO dto = new com.unioff.dto.BeneficioResponseDTO();
+    private BeneficioResponseDTO mapBeneficioToDTO(Beneficio beneficio) {
+        BeneficioResponseDTO dto = new BeneficioResponseDTO();
         dto.setId(beneficio.getId());
         dto.setTitulo(beneficio.getTitulo());
         dto.setDescricao(beneficio.getDescricao());
@@ -112,17 +130,17 @@ public class EmpresaService {
         return dto;
     }
 
-    public org.springframework.data.domain.Page<EmpresaResponseDTO> listarEmpresas(
-            String nome, String cidade, String bairro, org.springframework.data.domain.Pageable pageable) {
+    public Page<EmpresaResponseDTO> listarEmpresas(
+            String nome, String cidade, String bairro, Pageable pageable) {
         return empresaRepository.findByFiltros(nome, cidade, bairro, pageable)
                 .map(this::mapToDTO);
     }
 
-    public com.unioff.dto.EmpresaDetalhesDTO getDetalhesEmpresa(java.util.UUID empresaId) {
+    public EmpresaDetalhesDTO getDetalhesEmpresa(UUID empresaId) {
         Empresa empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
         
-        com.unioff.dto.EmpresaDetalhesDTO dto = new com.unioff.dto.EmpresaDetalhesDTO();
+        EmpresaDetalhesDTO dto = new EmpresaDetalhesDTO();
         dto.setId(empresa.getId());
         if (empresa.getUsuario() != null) {
             dto.setUsuarioId(empresa.getUsuario().getId());
@@ -139,30 +157,30 @@ public class EmpresaService {
         dto.setSite(empresa.getSite());
         
         if (empresa.getBeneficios() != null) {
-            java.util.List<com.unioff.dto.BeneficioResponseDTO> beneficiosDTO = empresa.getBeneficios().stream()
+            List<BeneficioResponseDTO> beneficiosDTO = empresa.getBeneficios().stream()
                     .map(this::mapBeneficioToDTO)
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
             dto.setBeneficios(beneficiosDTO);
         }
         return dto;
     }
 
     @Autowired
-    private com.unioff.repository.CupomRepository cupomRepository;
+    private CupomRepository cupomRepository;
 
     @Transactional(readOnly = true)
-    public com.unioff.dto.MetricasEmpresaDTO getMetricas(String email) {
+    public MetricasEmpresaDTO getMetricas(String email) {
         Empresa empresa = empresaRepository.findByUsuarioEmail(email)
                 .orElseThrow(() -> new RuntimeException("Empresa não encontrada"));
 
-        com.unioff.dto.MetricasEmpresaDTO metricas = new com.unioff.dto.MetricasEmpresaDTO();
+        MetricasEmpresaDTO metricas = new MetricasEmpresaDTO();
         metricas.setEmpresaId(empresa.getId());
         metricas.setNomeFantasia(empresa.getNomeFantasia());
 
-        java.util.List<Object[]> cuponsUsadosPorBeneficio = cupomRepository.countCuponsPorBeneficioStatus(empresa.getId(), com.unioff.entity.StatusCupom.USADO);
-        java.util.Map<java.util.UUID, Long> mapUsados = new java.util.HashMap<>();
+        List<Object[]> cuponsUsadosPorBeneficio = cupomRepository.countCuponsPorBeneficioStatus(empresa.getId(), StatusCupom.USADO);
+        Map<UUID, Long> mapUsados = new HashMap<>();
         for (Object[] row : cuponsUsadosPorBeneficio) {
-            mapUsados.put((java.util.UUID) row[0], ((Number) row[1]).longValue());
+            mapUsados.put((UUID) row[0], ((Number) row[1]).longValue());
         }
 
         long totalBeneficios = 0;
@@ -170,11 +188,11 @@ public class EmpresaService {
         long totalResgates = 0;
         long totalCuponsUtilizados = 0;
 
-        java.util.List<com.unioff.dto.MetricasBeneficioDTO> listaBeneficios = new java.util.ArrayList<>();
+        List<MetricasBeneficioDTO> listaBeneficios = new ArrayList<>();
 
         if (empresa.getBeneficios() != null) {
             totalBeneficios = empresa.getBeneficios().size();
-            for (com.unioff.entity.Beneficio b : empresa.getBeneficios()) {
+            for (Beneficio b : empresa.getBeneficios()) {
                 if (b.isAtivo()) {
                     totalBeneficiosAtivos++;
                 }
@@ -183,7 +201,7 @@ public class EmpresaService {
                 long usados = mapUsados.getOrDefault(b.getId(), 0L);
                 totalCuponsUtilizados += usados;
 
-                com.unioff.dto.MetricasBeneficioDTO mb = new com.unioff.dto.MetricasBeneficioDTO();
+                MetricasBeneficioDTO mb = new MetricasBeneficioDTO();
                 mb.setBeneficioId(b.getId());
                 mb.setTitulo(b.getTitulo());
                 mb.setQuantidadeResgates(b.getQuantidadeResgates());
