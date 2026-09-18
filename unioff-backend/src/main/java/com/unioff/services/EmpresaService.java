@@ -10,6 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unioff.entity.TipoUsuario;
+import com.unioff.exceptions.EmailJaCadastradoException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+
 @Service
 public class EmpresaService {
 
@@ -206,4 +211,51 @@ public class EmpresaService {
 
         return metricas;
     }
+
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Transactional
+    public Empresa cadastrar(
+            String nome,
+            String email,
+            String senha,
+            String nomeFantasia,
+            String cnpj,
+            String descricao,
+            String cidade,
+            String bairro,
+            String logradouro,
+            String numero,
+            String telephoneWhatsapp,
+            String site
+    ) {
+        if (usuarioRepository.existsByEmail(email)) {
+            throw new EmailJaCadastradoException(email);
+        }
+
+        Usuario usuario = new Usuario();
+        usuario.setNome(nome);
+        usuario.setEmail(email);
+        usuario.setSenhaHash(passwordEncoder.encode(senha));
+        usuario.setTipoUsuario(TipoUsuario.EMPRESA);
+        usuario = usuarioRepository.save(usuario);
+
+        Empresa empresa = new Empresa();
+        empresa.setUsuario(usuario);
+        empresa.setNomeFantasia(nomeFantasia);
+        empresa.setCnpj(cnpj);
+        empresa.setDescricao(descricao);
+        empresa.setCidade(cidade);
+        empresa.setBairro(bairro);
+        empresa.setLogradouro(logradouro);
+        empresa.setNumero(numero);
+        empresa.setTelephoneWhatsapp(telephoneWhatsapp);
+        empresa.setSite(site);
+
+        return empresaRepository.save(empresa);
+    }
+
+
 }

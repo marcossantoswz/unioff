@@ -18,6 +18,6 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
             @Param("empresaId") UUID empresaId, 
             @Param("status") StatusCupom status);
 
-    List<Cupom> findByEstudanteIdOrderByDataCupomDesc(UUID estudanteId);
+    List<Cupom> findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId);
 }
 
