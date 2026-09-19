@@ -70,71 +70,78 @@ Banco de Dados (PostgreSQL)
 
 ## Entidades
 
-### 1. Usuário
-Classe base de autenticação (Spring Security). Implementa `UserDetails` diretamente.
+```mermaid
+classDiagram
+    direction TB
 
-| Atributo | Tipo (Java)   | Descrição | Regras |
-|---|---------------|---|---|
-| `id` | UUID          | Identificador único | PK, autoincremento |
-| `nome` | String        | Nome do usuário | Obrigatório |
-| `email` | String        | E-mail para login | Obrigatório, Único |
-| `senhaHash` | String        | Senha criptografada (BCrypt) | Obrigatório, nunca serializado em resposta |
-| `tipoUsuario` | Enum          | ESTUDANTE, EMPRESA, ADMIN | Obrigatório |
-| `ativo` | boolean       | Conta ativa/desativada | Default: true |
-| `dataCriacao` | LocalDateTime | Data de criação da conta | Preenchido automaticamente |
+    class Usuario {
+        +UUID id
+        +String nome
+        +String email
+        -String senhaHash
+        +TipoUsuario tipoUsuario
+        +boolean ativo
+        +LocalDateTime dataCriacao
+    }
 
-### 2. Estudante
-Relacionamento 1:1 com `Usuario`, ID compartilhado via `@MapsId`.
+    class TipoUsuario {
+        <<enumeration>>
+        ESTUDANTE
+        EMPRESA
+        ADMIN
+    }
 
-| Atributo | Tipo (Java) | Descrição | Regras |
-|---|-------------|---|---|
-| `id` | UUID        | Mesmo ID do `Usuario` | PK e FK (via `@MapsId`) |
-| `instituicao` | String      | Nome da universidade | Obrigatório |
-| `curso` | String      | Curso do estudante | Opcional |
-| `matricula` | String      | Número de matrícula | Opcional, **sem restrição de unicidade** |
-| `usuario` | Usuario     | Referência de navegação para dados de login | `@OneToOne @MapsId` |
+    class Estudante {
+        +UUID id
+        +String instituicao
+        +String curso
+        +String matricula
+        +Usuario usuario
+    }
 
-### 3. Empresa (Estabelecimento)
-Relacionamento 1:1 com `Usuario`, ID compartilhado via `@MapsId`.
+    class Empresa {
+        +UUID id
+        +String nomeFantasia
+        +String descricao
+        +String cidade
+        +String bairro
+        +String logradouro
+        +String numero
+        +String telephoneWhatsapp
+        +String site
+        +Usuario usuario
+        +List~Beneficio~ beneficios
+    }
 
-| Atributo | Tipo (Java)     | Descrição | Regras |
-|---|-----------------|---|---|
-| `id` | UUID            | Mesmo ID do `Usuario` | PK e FK (via `@MapsId`) |
-| `nomeFantasia` | String          | Nome público da loja | Obrigatório |
-| `descricao` | String          | Descrição do estabelecimento | Opcional |
-| `cidade` | String          | Cidade | Obrigatório |
-| `bairro` | String          | Bairro | Obrigatório |
-| `logradouro` | String          | Rua/avenida | Obrigatório |
-| `numero` | String          | Número do endereço | Obrigatório |
-| `telephoneWhatsapp` | String          | Contato via WhatsApp | Opcional |
-| `site` | String          | Site da empresa | Opcional |
-| `usuario` | Usuario         | Referência de navegação para dados de login | `@OneToOne @MapsId` |
-| `beneficios` | List<Beneficio> | Ofertas cadastradas | `@OneToMany(mappedBy = "empresa")` |
+    class Beneficio {
+        +UUID id
+        +String titulo
+        +String descricao
+        +LocalDate dataInicio
+        +LocalDate dataFim
+        +Integer quantidadeResgates
+        +Integer quantidadeMaxResgastes
+        +boolean ativo
+        +Empresa empresa
+        +List~Cupom~ cupons
+    }
 
-### 4. Benefício
+    class Cupom {
+        +UUID id
+        +String codigoCupom
+        +LocalDateTime dataResgate
+        +boolean utilizado
+        +Estudante estudante
+        +Beneficio beneficio
+    }
 
-| Atributo                 | Tipo (Java) | Descrição | Regras |
-|--------------------------|-------------|---|---|
-| `id`                     | UUID        | Identificador único | PK, autoincremento |
-| `titulo`                 | String      | Nome do benefício | Obrigatório |
-| `descricao`              | String      | Detalhes do benefício | Opcional |
-| `dataInicio`             | LocalDate   | Início da validade | Opcional |
-| `dataFim`                | LocalDate   | Fim da validade | Opcional |
-| `quantidadeResgates`     | Integer     | Contador de resgates realizados | Default: 0 |
-| `quantidadeMaxResgastes` | Integer     | Limite total de resgates | Obrigatório, > 0 |
-| `ativo`                  | boolean     | Exclusão lógica | Default: true |
-| `empresa`                | Empresa     | Dona do benefício | `@ManyToOne`, obrigatório |
-| `cupons`                 | List<Cupom> | Resgates realizados para este benefício | `@OneToMany(mappedBy = "beneficio")` |
-
-### 5. Cupom
-| Atributo | Tipo (Java)   | Descrição | Regras |
-|---|---------------|---|---|
-| `id` | UUID          | Identificador único | PK, autoincremento |
-| `codigoCupom` | String        | Código único do cupom gerado | Obrigatório, Único |
-| `dataResgate` | LocalDateTime | Quando o estudante resgatou | Preenchido automaticamente |
-| `utilizado` | boolean       | Se o cupom já foi validado pela empresa | Default: false |
-| `estudante` | Estudante     | Quem gerou o cupom | `@ManyToOne`, obrigatório |
-| `beneficio` | Beneficio     | Qual benefício foi resgatado | `@ManyToOne`, obrigatório |
+    Usuario --> TipoUsuario : possui tipo
+    Usuario "1" -- "0..1" Estudante : @MapsId
+    Usuario "1" -- "0..1" Empresa : @MapsId
+    Empresa "1" *-- "0..*" Beneficio : beneficios
+    Estudante "1" -- "0..*" Cupom : resgata
+    Beneficio "1" *-- "0..*" Cupom : cupons
+```
 
 ### Frontend (a definir)
 ---
