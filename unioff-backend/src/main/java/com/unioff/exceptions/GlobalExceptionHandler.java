@@ -13,6 +13,20 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleNaoEncontrado(
+            ResourceNotFoundException ex, HttpServletRequest request
+    ) {
+        return montarResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler({BeneficioIndisponivelException.class, ResgateDuplicadoException.class})
+    public ResponseEntity<Map<String, Object>> handleConflito(
+            RuntimeException ex, HttpServletRequest request
+    ) {
+        return montarResposta(HttpStatus.CONFLICT, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(EmailJaCadastradoException.class)
     public ResponseEntity<Map<String, Object>> handleEmailJaCadastrado(
             EmailJaCadastradoException ex, HttpServletRequest request
