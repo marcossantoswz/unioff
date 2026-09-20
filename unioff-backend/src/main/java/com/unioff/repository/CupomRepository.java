@@ -19,5 +19,7 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
             @Param("status") StatusCupom status);
 
     List<Cupom> findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId);
+
+    boolean existsByEstudanteIdAndBeneficioId(UUID estudanteId, UUID beneficioId);
 }
 
