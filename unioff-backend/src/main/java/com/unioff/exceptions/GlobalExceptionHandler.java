@@ -41,6 +41,17 @@ public class GlobalExceptionHandler {
         return montarResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
+            org.springframework.web.bind.MethodArgumentNotValidException ex, HttpServletRequest request
+    ) {
+        String mensagem = ex.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Erro de validação");
+        return montarResposta(HttpStatus.BAD_REQUEST, mensagem, request);
+    }
+
     private ResponseEntity<Map<String, Object>> montarResposta(
             HttpStatus status, String mensagem, HttpServletRequest request
     ) {
