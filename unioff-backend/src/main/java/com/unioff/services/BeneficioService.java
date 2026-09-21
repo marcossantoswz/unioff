@@ -25,6 +25,28 @@ public class BeneficioService {
     @Autowired
     private EmpresaRepository empresaRepository;
 
+    public BeneficioResponseDTO cadastrarBeneficio(String emailEmpresa, BeneficioRequestDTO dto) {
+        if (dto.getDataFim() != null && dto.getDataFim().isBefore(dto.getDataInicio())) {
+            throw new IllegalArgumentException("A data de fim não pode ser anterior à data de início");
+        }
+
+        Empresa empresa = empresaRepository.findByUsuarioEmail(emailEmpresa)
+                .orElseThrow(() -> new EmpresaNotFoundException("Empresa não encontrada"));
+
+        Beneficio beneficio = new Beneficio();
+        beneficio.setTitulo(dto.getTitulo());
+        beneficio.setDescricao(dto.getDescricao());
+        beneficio.setDataInicio(dto.getDataInicio());
+        beneficio.setDataFim(dto.getDataFim());
+        beneficio.setQuantidadeMaxResgastes(dto.getQuantidadeMaxResgastes());
+        beneficio.setQuantidadeResgates(0);
+        beneficio.setAtivo(true);
+        beneficio.setEmpresa(empresa);
+
+        beneficio = beneficioRepository.save(beneficio);
+        return mapToDTO(beneficio);
+    }
+
     private BeneficioResponseDTO mapToDTO(Beneficio beneficio) {
         BeneficioResponseDTO dto = new BeneficioResponseDTO();
         dto.setId(beneficio.getId());
