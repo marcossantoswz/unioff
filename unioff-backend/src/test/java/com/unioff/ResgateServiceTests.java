@@ -115,4 +115,21 @@ class ResgateServiceTests {
         assertThrows(CupomInvalidoException.class,
                 () -> service.validar(cupom.getCodigo(), estudante));
     }
+
+    @Test
+    void estudanteConsultaSeusCuponsMaisRecentesPrimeiro() {
+        var cupom = service.resgatar(beneficio.getId(), estudante);
+        var resultado = service.listarDoEstudante(estudante.getId());
+        assertEquals(cupom.getCodigo(), resultado.get(0).codigo());
+        assertEquals("Desconto de teste", resultado.get(0).beneficioTitulo());
+        assertEquals(estudante.getNome(), resultado.get(0).estudanteNome());
+    }
+
+    @Test
+    void empresaConsultaCuponsDeSeusBeneficios() {
+        var cupom = service.resgatar(beneficio.getId(), estudante);
+        var resultado = service.listarDaEmpresa("empresa@teste.com");
+        assertTrue(resultado.stream().anyMatch(item -> item.codigo().equals(cupom.getCodigo())));
+        assertTrue(service.listarDaEmpresa("outra@empresa.com").isEmpty());
+    }
 }

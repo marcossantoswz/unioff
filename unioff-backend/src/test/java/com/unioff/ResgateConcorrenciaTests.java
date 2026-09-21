@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
@@ -37,6 +38,22 @@ class ResgateConcorrenciaTests {
     @Test
     void exigeAutenticacao() throws Exception {
         assertEquals(401, mvc.perform(post("/api/beneficios/{id}/resgates", UUID.randomUUID()))
+                .andReturn().getResponse().getStatus());
+    }
+
+    @Test
+    @WithMockUser(roles = "EMPRESA")
+    void empresaNaoAcessaConsultaDoEstudante() throws Exception {
+        assertEquals(403, mvc.perform(org.springframework.test.web.servlet.request
+                .MockMvcRequestBuilders.get("/api/resgates/me"))
+                .andReturn().getResponse().getStatus());
+    }
+
+    @Test
+    @WithMockUser(roles = "ESTUDANTE")
+    void estudanteNaoAcessaConsultaDaEmpresa() throws Exception {
+        assertEquals(403, mvc.perform(org.springframework.test.web.servlet.request
+                .MockMvcRequestBuilders.get("/api/resgates/empresa"))
                 .andReturn().getResponse().getStatus());
     }
 
