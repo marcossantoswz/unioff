@@ -4,6 +4,7 @@ import com.unioff.entity.Cupom;
 import com.unioff.entity.Beneficio;
 import com.unioff.entity.Estudante;
 import com.unioff.entity.Usuario;
+import com.unioff.dto.CupomConsultaDTO;
 import com.unioff.exceptions.BeneficioIndisponivelException;
 import com.unioff.exceptions.CupomInvalidoException;
 import com.unioff.exceptions.ResgateDuplicadoException;
@@ -76,7 +77,15 @@ public class CupomService {
      * Lista o histórico de resgates do estudante, do mais recente para o mais antigo.
      * O estudanteId deve vir do usuário autenticado (extraído do JWT pelo Controller).
      */
-    public List<Cupom> listarHistoricoDoEstudante(UUID estudanteId) {
-        return cupomRepository.findByEstudanteIdOrderByDataGeracaoDesc(estudanteId);
+    @Transactional(readOnly = true)
+    public List<CupomConsultaDTO> listarDoEstudante(UUID estudanteId) {
+        return cupomRepository.findByEstudanteIdOrderByDataGeracaoDesc(estudanteId)
+                .stream().map(CupomConsultaDTO::de).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CupomConsultaDTO> listarDaEmpresa(String email) {
+        return cupomRepository.findByBeneficioEmpresaUsuarioEmailOrderByDataGeracaoDesc(email)
+                .stream().map(CupomConsultaDTO::de).toList();
     }
 }

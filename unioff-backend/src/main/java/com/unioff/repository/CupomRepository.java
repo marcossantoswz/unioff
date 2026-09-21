@@ -23,6 +23,8 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
 
     List<Cupom> findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId);
 
+    List<Cupom> findByBeneficioEmpresaUsuarioEmailOrderByDataGeracaoDesc(String email);
+
     boolean existsByEstudanteIdAndBeneficioId(UUID estudanteId, UUID beneficioId);
 
     Optional<Cupom> findByCodigo(String codigo);
