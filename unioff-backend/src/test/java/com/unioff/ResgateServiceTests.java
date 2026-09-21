@@ -5,6 +5,7 @@ import com.unioff.entity.Empresa;
 import com.unioff.entity.StatusCupom;
 import com.unioff.entity.Usuario;
 import com.unioff.exceptions.BeneficioIndisponivelException;
+import com.unioff.exceptions.CupomInvalidoException;
 import com.unioff.exceptions.ResgateDuplicadoException;
 import com.unioff.exceptions.ResourceNotFoundException;
 import com.unioff.repository.BeneficioRepository;
@@ -88,5 +89,30 @@ class ResgateServiceTests {
     void informaBeneficioInexistente() {
         assertThrows(ResourceNotFoundException.class,
                 () -> service.resgatar(UUID.randomUUID(), estudante));
+    }
+
+    @Test
+    void empresaDonaValidaCupomPendente() {
+        var cupom = service.resgatar(beneficio.getId(), estudante);
+        Usuario empresa = usuarios.findByEmail("empresa@teste.com").orElseThrow();
+        var validado = service.validar(cupom.getCodigo(), empresa);
+        assertEquals(StatusCupom.USADO, validado.getStatus());
+        assertNotNull(validado.getDataUso());
+    }
+
+    @Test
+    void recusaCupomJaUtilizado() {
+        var cupom = service.resgatar(beneficio.getId(), estudante);
+        Usuario empresa = usuarios.findByEmail("empresa@teste.com").orElseThrow();
+        service.validar(cupom.getCodigo(), empresa);
+        assertThrows(CupomInvalidoException.class,
+                () -> service.validar(cupom.getCodigo(), empresa));
+    }
+
+    @Test
+    void recusaValidacaoPorQuemNaoEDono() {
+        var cupom = service.resgatar(beneficio.getId(), estudante);
+        assertThrows(CupomInvalidoException.class,
+                () -> service.validar(cupom.getCodigo(), estudante));
     }
 }
