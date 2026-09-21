@@ -34,6 +34,13 @@ public class GlobalExceptionHandler {
         return montarResposta(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(BeneficioNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleBeneficioNotFound(
+            BeneficioNotFoundException ex, HttpServletRequest request
+    ) {
+        return montarResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
     private ResponseEntity<Map<String, Object>> montarResposta(
             HttpStatus status, String mensagem, HttpServletRequest request
     ) {
