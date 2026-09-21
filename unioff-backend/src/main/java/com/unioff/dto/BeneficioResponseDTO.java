@@ -16,4 +16,6 @@ public class BeneficioResponseDTO {
     private Integer quantidadeDisponivel;
     private Boolean esgotado;
     private Boolean ativo;
+    private UUID empresaId;
+    private String nomeEmpresa;
 }
