@@ -8,8 +8,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface CupomRepository extends JpaRepository<Cupom, UUID> {
@@ -35,5 +37,3 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
             @Param("empresaEmail") String empresaEmail,
             @Param("dataUso") LocalDateTime dataUso);
 }
-import java.time.LocalDateTime;
-import java.util.Optional;

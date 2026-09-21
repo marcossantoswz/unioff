@@ -5,6 +5,7 @@ import com.unioff.entity.Beneficio;
 import com.unioff.entity.Estudante;
 import com.unioff.entity.Usuario;
 import com.unioff.exceptions.BeneficioIndisponivelException;
+import com.unioff.exceptions.CupomInvalidoException;
 import com.unioff.exceptions.ResgateDuplicadoException;
 import com.unioff.exceptions.ResourceNotFoundException;
 import com.unioff.repository.BeneficioRepository;
@@ -59,6 +60,16 @@ public class CupomService {
         } catch (DataIntegrityViolationException ex) {
             throw new ResgateDuplicadoException();
         }
+    }
+
+    @Transactional
+    public Cupom validar(String codigo, Usuario empresa) {
+        int atualizados = cupomRepository.validarPendenteDaEmpresa(
+                codigo, empresa.getEmail(), LocalDateTime.now());
+        if (atualizados != 1) {
+            throw new CupomInvalidoException();
+        }
+        return cupomRepository.findByCodigo(codigo).orElseThrow();
     }
 
     /**
