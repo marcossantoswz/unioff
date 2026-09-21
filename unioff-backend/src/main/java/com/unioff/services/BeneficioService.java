@@ -83,6 +83,17 @@ public class BeneficioService {
         beneficioRepository.save(beneficio);
     }
 
+    public BeneficioResponseDTO buscarPorId(UUID id) {
+        Beneficio beneficio = beneficioRepository.findById(id)
+                .orElseThrow(() -> new BeneficioNotFoundException("Benefício não encontrado com id: " + id));
+        return mapToDTO(beneficio);
+    }
+
+    public Page<BeneficioResponseDTO> listarFeed(String busca, UUID empresaId, Pageable pageable) {
+        Page<Beneficio> beneficios = beneficioRepository.findBeneficiosFeed(busca, empresaId, pageable);
+        return beneficios.map(this::mapToDTO);
+    }
+
     private BeneficioResponseDTO mapToDTO(Beneficio beneficio) {
         BeneficioResponseDTO dto = new BeneficioResponseDTO();
         dto.setId(beneficio.getId());
