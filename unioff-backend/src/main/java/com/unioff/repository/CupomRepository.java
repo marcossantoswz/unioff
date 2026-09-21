@@ -3,6 +3,7 @@ package com.unioff.repository;
 import com.unioff.entity.Cupom;
 import com.unioff.entity.StatusCupom;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,5 +22,18 @@ public interface CupomRepository extends JpaRepository<Cupom, UUID> {
     List<Cupom> findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId);
 
     boolean existsByEstudanteIdAndBeneficioId(UUID estudanteId, UUID beneficioId);
-}
 
+    Optional<Cupom> findByCodigo(String codigo);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Cupom c SET c.status = com.unioff.entity.StatusCupom.USADO, " +
+           "c.dataUso = :dataUso WHERE c.codigo = :codigo " +
+           "AND c.status = com.unioff.entity.StatusCupom.PENDENTE " +
+           "AND c.beneficio.empresa.usuario.email = :empresaEmail")
+    int validarPendenteDaEmpresa(
+            @Param("codigo") String codigo,
+            @Param("empresaEmail") String empresaEmail,
+            @Param("dataUso") LocalDateTime dataUso);
+}
+import java.time.LocalDateTime;
+import java.util.Optional;

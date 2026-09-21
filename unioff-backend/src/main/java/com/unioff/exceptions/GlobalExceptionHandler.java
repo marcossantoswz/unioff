@@ -20,7 +20,8 @@ public class GlobalExceptionHandler {
         return montarResposta(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
-    @ExceptionHandler({BeneficioIndisponivelException.class, ResgateDuplicadoException.class})
+    @ExceptionHandler({BeneficioIndisponivelException.class, ResgateDuplicadoException.class,
+            CupomInvalidoException.class})
     public ResponseEntity<Map<String, Object>> handleConflito(
             RuntimeException ex, HttpServletRequest request
     ) {
