@@ -31,4 +31,34 @@ public class BeneficioController {
         BeneficioResponseDTO response = beneficioService.buscarPorId(id);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('EMPRESA')")
+    public ResponseEntity<BeneficioResponseDTO> cadastrarBeneficio(
+            java.security.Principal principal,
+            @jakarta.validation.Valid @RequestBody com.unioff.dto.BeneficioRequestDTO dto) {
+        BeneficioResponseDTO response = beneficioService.cadastrarBeneficio(principal.getName(), dto);
+        return ResponseEntity.status(201).body(response);
+    }
+
+    @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('EMPRESA')")
+    public ResponseEntity<BeneficioResponseDTO> atualizarBeneficio(
+            @PathVariable UUID id,
+            java.security.Principal principal,
+            @RequestBody com.unioff.dto.BeneficioUpdateDTO dto) {
+        BeneficioResponseDTO response = beneficioService.atualizarBeneficio(id, principal.getName(), dto);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('EMPRESA') or hasRole('ADMIN')")
+    public ResponseEntity<Void> excluirBeneficio(
+            @PathVariable UUID id,
+            java.security.Principal principal) {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        beneficioService.excluirBeneficio(id, principal.getName(), isAdmin);
+        return ResponseEntity.noContent().build();
+    }
 }
