@@ -47,6 +47,42 @@ public class BeneficioService {
         return mapToDTO(beneficio);
     }
 
+    public BeneficioResponseDTO atualizarBeneficio(UUID id, String emailEmpresa, BeneficioUpdateDTO dto) {
+        Beneficio beneficio = beneficioRepository.findById(id)
+                .orElseThrow(() -> new BeneficioNotFoundException("Benefício não encontrado com id: " + id));
+
+        if (!beneficio.getEmpresa().getUsuario().getEmail().equals(emailEmpresa)) {
+            throw new SecurityException("Permissão negada. Você só pode editar os benefícios da sua empresa.");
+        }
+
+        if (dto.getTitulo() != null) beneficio.setTitulo(dto.getTitulo());
+        if (dto.getDescricao() != null) beneficio.setDescricao(dto.getDescricao());
+        if (dto.getDataInicio() != null) beneficio.setDataInicio(dto.getDataInicio());
+        if (dto.getDataFim() != null) beneficio.setDataFim(dto.getDataFim());
+        if (dto.getQuantidadeMaxResgastes() != null) beneficio.setQuantidadeMaxResgastes(dto.getQuantidadeMaxResgastes());
+        if (dto.getAtivo() != null) beneficio.setAtivo(dto.getAtivo());
+
+        if (beneficio.getDataFim() != null && beneficio.getDataFim().isBefore(beneficio.getDataInicio())) {
+            throw new IllegalArgumentException("A data de fim não pode ser anterior à data de início");
+        }
+
+        beneficio = beneficioRepository.save(beneficio);
+        return mapToDTO(beneficio);
+    }
+
+    public void excluirBeneficio(UUID id, String emailLogado, boolean isAdmin) {
+        Beneficio beneficio = beneficioRepository.findById(id)
+                .orElseThrow(() -> new BeneficioNotFoundException("Benefício não encontrado com id: " + id));
+
+        if (!isAdmin && !beneficio.getEmpresa().getUsuario().getEmail().equals(emailLogado)) {
+            throw new SecurityException("Permissão negada para desativar este benefício.");
+        }
+
+        // Realizamos uma exclusão lógica (soft-delete) para preservar histórico de resgates
+        beneficio.setAtivo(false);
+        beneficioRepository.save(beneficio);
+    }
+
     private BeneficioResponseDTO mapToDTO(Beneficio beneficio) {
         BeneficioResponseDTO dto = new BeneficioResponseDTO();
         dto.setId(beneficio.getId());
