@@ -136,6 +136,34 @@ Relacionamento 1:1 com `Usuario`, ID compartilhado via `@MapsId`.
 | `estudante` | Estudante     | Quem gerou o cupom | `@ManyToOne`, obrigatório |
 | `beneficio` | Beneficio     | Qual benefício foi resgatado | `@ManyToOne`, obrigatório |
 
+## Repository
+
+### UsuarioRepository
+| Método | Descrição |
+|---|---|
+| `findByEmail(String email)` | Busca um usuário pelo e-mail. Usado no login (`AuthService.autenticar`) e pelo `JwtAuthenticationFilter` para carregar o usuário autenticado a partir do e-mail extraído do token |
+| `existsByEmail(String email)` | Verifica duplicidade de e-mail antes de qualquer cadastro (estudante ou empresa) |
+
+### EstudanteRepository
+Sem métodos customizados.
+
+### EmpresaRepository
+| Método | Descrição |
+|---|---|
+| `findByUsuarioEmail(String email)` | Busca a empresa a partir do e-mail do usuário logado, atravessando o relacionamento `Empresa → Usuario`. Usado nas rotas `/api/empresas/me/**` |
+| `findByFiltros(nome, cidade, bairro, Pageable)` | Filtros opcionais (só aplicados se não forem `null`) para a listagem pública paginada de empresas (`GET /api/empresas`) |
+
+### BeneficioRepository
+| Método | Descrição |
+|---|---|
+| `findBeneficiosDaEmpresa(email, ativo, esgotado, Pageable)` | Localiza os benefícios de uma empresa pelo e-mail do usuário dono, com filtros opcionais de status (`ativo`) e esgotamento (`quantidadeResgates` vs `quantidadeMaxResgastes`). Usado em `GET /api/empresas/me/beneficios` |
+
+### CupomRepository
+| Método | Descrição |
+|---|---|
+| `findByEstudanteIdOrderByDataGeracaoDesc(UUID estudanteId)` | Histórico de cupons de um estudante, do mais recente para o mais antigo. Usado em `GET /api/resgates/me` |
+| `countCuponsPorBeneficioStatus(empresaId, status)` | Conta cupons agrupados por benefício e status (`GROUP BY`), retornando pares `beneficioId`/contagem. Usado no cálculo de métricas da empresa (`GET /api/empresas/me/metricas`) |
+
 ### Frontend (a definir)
 ---
 
