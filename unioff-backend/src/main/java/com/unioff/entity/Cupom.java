@@ -10,13 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "cupons",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_cupom_estudante_beneficio",
-                columnNames = {"estudante_id", "beneficio_id"}
-        )
-)
+@Table(name = "cupons")
 @Getter
 @Setter
 @NoArgsConstructor
