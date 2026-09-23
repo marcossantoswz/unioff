@@ -36,4 +36,14 @@ public interface BeneficioRepository extends JpaRepository<Beneficio, UUID> {
     int incrementarResgatesSeDisponivel(
             @Param("beneficioId") UUID beneficioId,
             @Param("hoje") LocalDate hoje);
+    @Query("SELECT b FROM Beneficio b WHERE b.ativo = true " +
+           "AND b.quantidadeResgates < b.quantidadeMaxResgastes " +
+           "AND (b.dataInicio IS NULL OR b.dataInicio <= CURRENT_DATE) " +
+           "AND (b.dataFim IS NULL OR b.dataFim >= CURRENT_DATE) " +
+           "AND (:busca IS NULL OR LOWER(b.titulo) LIKE LOWER(CONCAT('%', :busca, '%')) OR LOWER(b.descricao) LIKE LOWER(CONCAT('%', :busca, '%'))) " +
+           "AND (:empresaId IS NULL OR b.empresa.id = :empresaId)")
+    Page<Beneficio> findBeneficiosFeed(
+            @Param("busca") String busca,
+            @Param("empresaId") UUID empresaId,
+            Pageable pageable);
 }
