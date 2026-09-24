@@ -48,3 +48,84 @@ export interface BeneficioForm {
   quantidadeMaxResgastes: number;
   ativo?: boolean;
 }
+
+export interface Empresa {
+  id: string;
+  usuarioId: string;
+  nome: string;
+  email: string;
+  nomeFantasia: string;
+  descricao: string;
+  cidade: string;
+  bairro: string;
+  logradouro: string;
+  numero: string;
+  telephoneWhatsapp: string;
+  site: string;
+}
+
+export interface EmpresaDetalhes extends Empresa {
+  beneficios: Beneficio[];
+}
+
+export type EmpresaUpdate = Partial<Omit<Empresa, "id" | "usuarioId" | "email">>;
+
+export interface EstudanteCadastro {
+  nome: string;
+  email: string;
+  senha: string;
+  instituicao: string;
+  curso: string;
+  matricula: string;
+}
+
+export interface EmpresaCadastro {
+  nome: string;
+  email: string;
+  senha: string;
+  nomeFantasia: string;
+  cnpj: string;
+  descricao: string;
+  cidade: string;
+  bairro: string;
+  logradouro: string;
+  numero: string;
+  telephoneWhatsapp: string;
+  site: string;
+}
+
+export interface Resgate {
+  id: string;
+  codigo: string;
+  status: StatusCupom;
+  dataGeracao: string;
+  beneficioId: string;
+}
+
+export interface CupomConsulta extends Resgate {
+  dataUso: string | null;
+  beneficioTitulo: string;
+  estudanteId: string;
+  estudanteNome: string;
+  empresaNome: string;
+}
+
+export interface MetricasBeneficio {
+  beneficioId: string;
+  titulo: string;
+  quantidadeResgates: number;
+  quantidadeMaxResgastes: number;
+  quantidadeDisponivel: number;
+  esgotado: boolean;
+  quantidadeCuponsUtilizados: number;
+}
+
+export interface MetricasEmpresa {
+  empresaId: string;
+  nomeFantasia: string;
+  totalBeneficios: number;
+  totalBeneficiosAtivos: number;
+  totalResgates: number;
+  totalCuponsUtilizados: number;
+  beneficios: MetricasBeneficio[];
+}
