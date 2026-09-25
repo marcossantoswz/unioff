@@ -1,0 +1,1178 @@
+ESPECIFICACAO DOS ENDPOINTS - UNIOFF
+=====================================
+
+1. INFORMACOES GERAIS
+=====================
+
+URL base:
+/api
+
+Formato padrao:
+Content-Type: application/json
+
+Autenticacao:
+Os endpoints protegidos devem receber o JWT no cabecalho:
+Authorization: Bearer <token_jwt>
+
+Perfis:
+- ESTUDANTE
+- EMPRESA
+- ADMIN
+
+Tabelas:
+- USUARIO
+- ESTUDANTE
+- EMPRESA
+- BENEFICIO
+- RESGATE
+
+Regras gerais:
+- USUARIO.email deve ser unico.
+- ESTUDANTE.usuario_id deve ser unico.
+- EMPRESA.usuario_id deve ser unico.
+- RESGATE.codigo_cupom deve ser unico.
+- Senhas devem ser armazenadas como hash BCrypt em senha_hash.
+- O hash da senha nunca deve ser retornado pela API.
+- IDs do estudante e da empresa autenticada devem ser obtidos pelo JWT.
+- Datas usam o formato ISO 8601, exemplo: 2026-09-01.
+- Data e hora usam o formato: 2026-09-01T14:30:00.
+- BENEFICIO.quantidade_resgates inicia em 0.
+- BENEFICIO.quantidade_max_resgastes deve ser maior que 0.
+- Um resgate so pode ser criado quando quantidade_resgates for menor que quantidade_max_resgastes.
+- A exclusao de beneficios deve ser logica, alterando ativo para false.
+
+Codigos HTTP:
+- 200 OK: operacao realizada com sucesso.
+- 201 Created: recurso criado com sucesso.
+- 204 No Content: operacao realizada sem corpo de resposta.
+- 400 Bad Request: dados invalidos.
+- 401 Unauthorized: token ausente, expirado ou invalido.
+- 403 Forbidden: usuario sem permissao.
+- 404 Not Found: recurso nao encontrado.
+- 409 Conflict: conflito com recurso existente ou cupom ja utilizado.
+- 422 Unprocessable Entity: regra de negocio nao atendida.
+
+Formato padrao de erro:
+{
+  "status": 422,
+  "error": "Unprocessable Entity",
+  "message": "O limite maximo de resgates foi atingido.",
+  "path": "/api/beneficios/10/resgates",
+  "timestamp": "2026-09-01T14:30:00"
+}
+
+
+2. MODELO DAS TABELAS
+=====================
+
+TABELA: USUARIO
+
+Descricao:
+Armazena os dados de autenticacao e identificacao dos usuarios.
+
+Campos:
+- id (PK)
+- nome (not null)
+- email (not null, unique)
+- senha_hash (not null)
+- tipo_usuario (ESTUDANTE, EMPRESA, ADMIN) (not null)
+- ativo (not null, default true)
+- data_criacao
+
+Relacionamentos:
+- 1:1 com ESTUDANTE
+- 1:1 com EMPRESA
+
+--------------------------------------------------
+
+TABELA: ESTUDANTE
+
+Descricao:
+Armazena informacoes especificas dos estudantes.
+
+Campos:
+- id (PK)
+- usuario_id (FK -> usuario.id, not null, unique)
+- instituicao (not null)
+- curso
+- matricula (opcional)
+
+Relacionamentos:
+- 1:1 com USUARIO
+- 1:N com RESGATE
+- N:N com BENEFICIO atraves de RESGATE
+
+--------------------------------------------------
+
+TABELA: EMPRESA
+
+Descricao:
+Armazena os dados dos estabelecimentos cadastrados.
+
+Campos:
+- id (PK)
+- usuario_id (FK -> usuario.id, not null, unique)
+- nome_fantasia (not null)
+- descricao
+- cidade (not null)
+- bairro (not null)
+- logradouro (not null)
+- numero (not null)
+- telephone_whatsapp
+- site
+
+Relacionamentos:
+- 1:1 com USUARIO
+- 1:N com BENEFICIO
+
+--------------------------------------------------
+
+TABELA: BENEFICIO
+
+Descricao:
+Armazena os beneficios disponibilizados pelas empresas.
+
+Campos:
+- id (PK)
+- empresa_id (FK -> empresa.id, not null)
+- titulo (not null)
+- descricao
+- data_inicio
+- data_fim
+- quantidade_resgates (not null, default 0)
+- quantidade_max_resgastes (not null)
+- ativo (not null, default true)
+
+Relacionamentos:
+- N:1 com EMPRESA
+- 1:N com RESGATE
+
+Restricoes recomendadas:
+- quantidade_resgates >= 0
+- quantidade_max_resgastes > 0
+- quantidade_resgates <= quantidade_max_resgastes
+- data_fim >= data_inicio, quando ambas forem informadas
+
+Campos calculados retornados pela API:
+- quantidadeDisponivel = quantidadeMaxResgastes - quantidadeResgates
+- esgotado = quantidadeResgates >= quantidadeMaxResgastes
+
+Os campos quantidadeDisponivel e esgotado nao precisam existir no banco.
+
+--------------------------------------------------
+
+TABELA: RESGATE
+
+Descricao:
+Armazena os resgates realizados pelos estudantes.
+
+Campos:
+- id (PK)
+- estudante_id (FK -> estudante.id, not null)
+- beneficio_id (FK -> beneficio.id, not null)
+- codigo_cupom (not null, unique)
+- data_resgate
+- utilizado (not null, default false)
+
+Relacionamentos:
+- N:1 com ESTUDANTE
+- N:1 com BENEFICIO
+
+
+3. CADASTRO E AUTENTICACAO
+==========================
+
+3.1 CADASTRAR ESTUDANTE
+-----------------------
+
+Historia:
+COMO ESTUDANTE,
+QUERO criar uma conta na plataforma,
+PARA acessar os beneficios oferecidos pelas empresas parceiras.
+
+Endpoint:
+POST /api/auth/estudantes
+
+Acesso:
+Publico.
+
+Dados enviados:
+{
+  "nome": "Marcos Aurelio Santos",
+  "email": "marcos@email.com",
+  "senha": "Senha@123",
+  "instituicao": "Universidade Exemplo",
+  "curso": "Engenharia de Software",
+  "matricula": "20260001"
+}
+
+Processamento:
+1. Validar os dados.
+2. Verificar se o email ja existe.
+3. Criar USUARIO com tipoUsuario ESTUDANTE e ativo true.
+4. Gerar senha_hash com BCrypt.
+5. Criar ESTUDANTE associado ao USUARIO.
+6. Salvar as duas entidades na mesma transacao.
+
+Resposta - 201 Created:
+{
+  "id": 1,
+  "usuarioId": 1,
+  "nome": "Marcos Aurelio Santos",
+  "email": "marcos@email.com",
+  "instituicao": "Universidade Exemplo",
+  "curso": "Engenharia de Software",
+  "matricula": "20260001",
+  "tipoUsuario": "ESTUDANTE",
+  "ativo": true,
+  "dataCriacao": "2026-09-01T14:30:00"
+}
+
+Erros:
+- 400: dados invalidos.
+- 409: email ja cadastrado.
+
+
+3.2 CADASTRAR EMPRESA
+---------------------
+
+Historias:
+COMO EMPRESA,
+QUERO criar uma conta na plataforma,
+PARA cadastrar meu estabelecimento e divulgar beneficios.
+
+COMO EMPRESA,
+QUERO cadastrar meu estabelecimento,
+PARA divulgar meus beneficios aos estudantes.
+
+Endpoint:
+POST /api/auth/empresas
+
+Acesso:
+Publico.
+
+Dados enviados:
+{
+  "nome": "Joao Silva",
+  "email": "contato@empresa.com",
+  "senha": "Senha@123",
+  "nomeFantasia": "Pizzaria Universitaria",
+  "descricao": "Pizzaria com ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Centro",
+  "logradouro": "Rua das Universidades",
+  "numero": "100",
+  "telephoneWhatsapp": "5519999999999",
+  "site": "https://www.empresa.com"
+}
+
+Processamento:
+1. Validar os dados.
+2. Verificar se o email ja existe.
+3. Criar USUARIO com tipoUsuario EMPRESA e ativo true.
+4. Gerar senha_hash com BCrypt.
+5. Criar EMPRESA associada ao USUARIO.
+6. Salvar as duas entidades na mesma transacao.
+
+Resposta - 201 Created:
+{
+  "id": 1,
+  "usuarioId": 2,
+  "nome": "Joao Silva",
+  "email": "contato@empresa.com",
+  "nomeFantasia": "Pizzaria Universitaria",
+  "descricao": "Pizzaria com ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Centro",
+  "logradouro": "Rua das Universidades",
+  "numero": "100",
+  "telephoneWhatsapp": "5519999999999",
+  "site": "https://www.empresa.com",
+  "tipoUsuario": "EMPRESA",
+  "ativo": true,
+  "dataCriacao": "2026-09-01T14:30:00"
+}
+
+Erros:
+- 400: dados invalidos.
+- 409: email ja cadastrado.
+
+
+3.3 REALIZAR LOGIN
+------------------
+
+Historia:
+COMO USUARIO,
+QUERO realizar login na plataforma,
+PARA acessar as funcionalidades disponiveis para meu perfil.
+
+Endpoint:
+POST /api/auth/login
+
+Acesso:
+Publico.
+
+Dados enviados:
+{
+  "email": "marcos@email.com",
+  "senha": "Senha@123"
+}
+
+Resposta - 200 OK:
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "usuario": {
+    "id": 1,
+    "nome": "Marcos Aurelio Santos",
+    "email": "marcos@email.com",
+    "tipoUsuario": "ESTUDANTE"
+  }
+}
+
+Erros:
+- 400: email ou senha ausentes.
+- 401: credenciais invalidas.
+- 403: usuario inativo.
+
+
+4. EMPRESAS
+===========
+
+4.1 LISTAR EMPRESAS
+-------------------
+
+Endpoint:
+GET /api/empresas
+
+Acesso:
+Publico ou autenticado, conforme decisao da equipe.
+
+Parametros opcionais:
+- nome
+- cidade
+- bairro
+- page
+- size
+- sort
+
+Exemplo:
+GET /api/empresas?nome=pizza&cidade=Campinas&page=0&size=10
+
+Resposta - 200 OK:
+{
+  "content": [
+    {
+      "id": 1,
+      "nomeFantasia": "Pizzaria Universitaria",
+      "descricao": "Pizzaria com ofertas para estudantes.",
+      "cidade": "Campinas",
+      "bairro": "Centro",
+      "logradouro": "Rua das Universidades",
+      "numero": "100",
+      "telephoneWhatsapp": "5519999999999",
+      "site": "https://www.empresa.com"
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+
+
+4.2 VISUALIZAR DETALHES DA EMPRESA
+-----------------------------------
+
+Historia:
+COMO ESTUDANTE,
+QUERO visualizar os detalhes de uma empresa,
+PARA conhecer os beneficios, a localizacao e as formas de contato.
+
+Endpoint:
+GET /api/empresas/{empresaId}
+
+Exemplo:
+GET /api/empresas/1
+
+Resposta - 200 OK:
+{
+  "id": 1,
+  "nomeFantasia": "Pizzaria Universitaria",
+  "descricao": "Pizzaria com ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Centro",
+  "logradouro": "Rua das Universidades",
+  "numero": "100",
+  "telephoneWhatsapp": "5519999999999",
+  "site": "https://www.empresa.com",
+  "beneficios": [
+    {
+      "id": 10,
+      "titulo": "20% de desconto em pizzas",
+      "descricao": "Valido para consumo no local.",
+      "dataInicio": "2026-09-01",
+      "dataFim": "2026-12-31",
+      "quantidadeResgates": 25,
+      "quantidadeMaxResgastes": 100,
+      "quantidadeDisponivel": 75,
+      "esgotado": false,
+      "ativo": true
+    }
+  ]
+}
+
+Erros:
+- 404: empresa nao encontrada.
+
+
+4.3 CONSULTAR A PROPRIA EMPRESA
+--------------------------------
+
+Endpoint:
+GET /api/empresas/me
+
+Acesso:
+Autenticado como EMPRESA.
+
+Resposta - 200 OK:
+{
+  "id": 1,
+  "usuarioId": 2,
+  "nome": "Joao Silva",
+  "email": "contato@empresa.com",
+  "nomeFantasia": "Pizzaria Universitaria",
+  "descricao": "Pizzaria com ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Centro",
+  "logradouro": "Rua das Universidades",
+  "numero": "100",
+  "telephoneWhatsapp": "5519999999999",
+  "site": "https://www.empresa.com"
+}
+
+
+4.4 ATUALIZAR EMPRESA
+---------------------
+
+Historia:
+COMO EMPRESA,
+QUERO atualizar minhas informacoes,
+PARA manter meus dados atualizados.
+
+Endpoint:
+PUT /api/empresas/me
+
+Acesso:
+Autenticado como EMPRESA.
+
+Dados enviados:
+{
+  "nome": "Joao da Silva",
+  "nomeFantasia": "Pizzaria Universitaria Atualizada",
+  "descricao": "Pizzaria especializada em ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Cambuí",
+  "logradouro": "Avenida Exemplo",
+  "numero": "200",
+  "telephoneWhatsapp": "5519888888888",
+  "site": "https://www.novosite.com"
+}
+
+Resposta - 200 OK:
+{
+  "id": 1,
+  "usuarioId": 2,
+  "nome": "Joao da Silva",
+  "nomeFantasia": "Pizzaria Universitaria Atualizada",
+  "descricao": "Pizzaria especializada em ofertas para estudantes.",
+  "cidade": "Campinas",
+  "bairro": "Cambuí",
+  "logradouro": "Avenida Exemplo",
+  "numero": "200",
+  "telephoneWhatsapp": "5519888888888",
+  "site": "https://www.novosite.com"
+}
+
+Regras:
+- A empresa deve ser identificada pelo JWT.
+- nome atualiza USUARIO.nome.
+- Os demais campos atualizam EMPRESA.
+- email, senha, tipoUsuario e ativo nao sao alterados nesta rota.
+
+
+5. BENEFICIOS
+=============
+
+5.1 LISTAR E PESQUISAR BENEFICIOS
+---------------------------------
+
+Historias:
+COMO ESTUDANTE,
+QUERO visualizar os beneficios disponiveis,
+PARA encontrar descontos do meu interesse.
+
+COMO ESTUDANTE,
+QUERO pesquisar beneficios por nome da empresa ou beneficio,
+PARA encontrar ofertas rapidamente.
+
+Endpoint:
+GET /api/beneficios
+
+Parametros opcionais:
+- busca
+- empresaId
+- cidade
+- bairro
+- disponivel: true ou false
+- page
+- size
+- sort
+
+Exemplos:
+GET /api/beneficios
+GET /api/beneficios?busca=pizza
+GET /api/beneficios?disponivel=true
+GET /api/beneficios?cidade=Campinas&bairro=Centro&page=0&size=10
+
+Regras:
+- Retornar somente beneficios ativos e vigentes.
+- Retornar somente beneficios de usuarios EMPRESA ativos.
+- Quando disponivel=true, retornar apenas beneficios nao esgotados.
+
+Resposta - 200 OK:
+{
+  "content": [
+    {
+      "id": 10,
+      "titulo": "20% de desconto em pizzas",
+      "descricao": "Valido para consumo no local.",
+      "dataInicio": "2026-09-01",
+      "dataFim": "2026-12-31",
+      "quantidadeResgates": 25,
+      "quantidadeMaxResgastes": 100,
+      "quantidadeDisponivel": 75,
+      "esgotado": false,
+      "ativo": true,
+      "empresa": {
+        "id": 1,
+        "nomeFantasia": "Pizzaria Universitaria",
+        "cidade": "Campinas",
+        "bairro": "Centro"
+      }
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+
+
+5.2 VISUALIZAR BENEFICIO
+------------------------
+
+Endpoint:
+GET /api/beneficios/{beneficioId}
+
+Resposta - 200 OK:
+{
+  "id": 10,
+  "titulo": "20% de desconto em pizzas",
+  "descricao": "Valido para consumo no local.",
+  "dataInicio": "2026-09-01",
+  "dataFim": "2026-12-31",
+  "quantidadeResgates": 25,
+  "quantidadeMaxResgastes": 100,
+  "quantidadeDisponivel": 75,
+  "esgotado": false,
+  "ativo": true,
+  "empresa": {
+    "id": 1,
+    "nomeFantasia": "Pizzaria Universitaria",
+    "cidade": "Campinas",
+    "bairro": "Centro",
+    "logradouro": "Rua das Universidades",
+    "numero": "100",
+    "telephoneWhatsapp": "5519999999999",
+    "site": "https://www.empresa.com"
+  }
+}
+
+Erros:
+- 404: beneficio nao encontrado ou indisponivel.
+
+
+5.3 CADASTRAR BENEFICIO
+-----------------------
+
+Historia:
+COMO EMPRESA,
+QUERO cadastrar beneficios,
+PARA atrair novos estudantes para meu estabelecimento.
+
+Endpoint:
+POST /api/beneficios
+
+Acesso:
+Autenticado como EMPRESA.
+
+Dados enviados:
+{
+  "titulo": "20% de desconto em pizzas",
+  "descricao": "Valido para consumo no local.",
+  "dataInicio": "2026-09-01",
+  "dataFim": "2026-12-31",
+  "quantidadeMaxResgastes": 100
+}
+
+Processamento:
+- empresa_id deve ser obtido pelo JWT.
+- quantidade_resgates deve iniciar em 0.
+- quantidade_max_resgastes deve ser maior que 0.
+- ativo deve iniciar como true.
+- data_fim nao pode ser anterior a data_inicio.
+
+Resposta - 201 Created:
+{
+  "id": 10,
+  "empresaId": 1,
+  "titulo": "20% de desconto em pizzas",
+  "descricao": "Valido para consumo no local.",
+  "dataInicio": "2026-09-01",
+  "dataFim": "2026-12-31",
+  "quantidadeResgates": 0,
+  "quantidadeMaxResgastes": 100,
+  "quantidadeDisponivel": 100,
+  "esgotado": false,
+  "ativo": true
+}
+
+Erros:
+- 400: dados invalidos.
+- 403: usuario nao possui perfil EMPRESA.
+- 422: quantidadeMaxResgastes menor que 1 ou periodo invalido.
+
+
+5.4 LISTAR BENEFICIOS DA EMPRESA
+--------------------------------
+
+Endpoint:
+GET /api/empresas/me/beneficios
+
+Acesso:
+Autenticado como EMPRESA.
+
+Parametros opcionais:
+- ativo
+- esgotado
+- page
+- size
+
+Resposta - 200 OK:
+{
+  "content": [
+    {
+      "id": 10,
+      "titulo": "20% de desconto em pizzas",
+      "descricao": "Valido para consumo no local.",
+      "dataInicio": "2026-09-01",
+      "dataFim": "2026-12-31",
+      "quantidadeResgates": 25,
+      "quantidadeMaxResgastes": 100,
+      "quantidadeDisponivel": 75,
+      "esgotado": false,
+      "ativo": true
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+
+
+5.5 ATUALIZAR BENEFICIO
+-----------------------
+
+Historia:
+COMO EMPRESA,
+QUERO editar beneficios,
+PARA manter minhas ofertas atualizadas.
+
+Endpoint:
+PUT /api/beneficios/{beneficioId}
+
+Acesso:
+Autenticado como EMPRESA.
+
+Dados enviados:
+{
+  "titulo": "25% de desconto em pizzas",
+  "descricao": "Valido de segunda a quinta-feira.",
+  "dataInicio": "2026-09-01",
+  "dataFim": "2027-01-31",
+  "quantidadeMaxResgastes": 150,
+  "ativo": true
+}
+
+Regras:
+- A empresa so pode alterar os proprios beneficios.
+- empresa_id nao pode ser alterado.
+- quantidade_resgates nao pode ser alterada manualmente.
+- quantidade_max_resgastes deve ser maior que 0.
+- O novo limite nao pode ser menor que quantidade_resgates.
+
+Exemplo invalido:
+- quantidadeResgates atual: 80
+- nova quantidadeMaxResgastes: 50
+
+Resposta - 200 OK:
+{
+  "id": 10,
+  "empresaId": 1,
+  "titulo": "25% de desconto em pizzas",
+  "descricao": "Valido de segunda a quinta-feira.",
+  "dataInicio": "2026-09-01",
+  "dataFim": "2027-01-31",
+  "quantidadeResgates": 25,
+  "quantidadeMaxResgastes": 150,
+  "quantidadeDisponivel": 125,
+  "esgotado": false,
+  "ativo": true
+}
+
+Erros:
+- 403: beneficio pertence a outra empresa.
+- 404: beneficio nao encontrado.
+- 422: novo limite menor que a quantidade ja resgatada.
+
+
+5.6 REMOVER BENEFICIO
+---------------------
+
+Historia:
+COMO EMPRESA,
+QUERO remover beneficios,
+PARA manter minhas ofertas atualizadas.
+
+Endpoint:
+DELETE /api/beneficios/{beneficioId}
+
+Acesso:
+Autenticado como EMPRESA.
+
+Regra:
+Executar exclusao logica definindo BENEFICIO.ativo como false.
+
+Resposta - 204 No Content:
+Sem corpo.
+
+
+6. RESGATES E CUPONS
+====================
+
+6.1 RESGATAR BENEFICIO
+----------------------
+
+Historia:
+COMO ESTUDANTE,
+QUERO resgatar um beneficio,
+PARA utiliza-lo em um estabelecimento parceiro.
+
+Endpoint:
+POST /api/beneficios/{beneficioId}/resgates
+
+Acesso:
+Autenticado como ESTUDANTE.
+
+Dados enviados:
+Nenhum corpo JSON. O estudante e identificado pelo JWT.
+
+Processamento obrigatorio:
+1. Identificar o ESTUDANTE pelo JWT.
+2. Localizar o BENEFICIO.
+3. Verificar se o beneficio esta ativo.
+4. Verificar data_inicio e data_fim.
+5. Verificar se quantidade_resgates < quantidade_max_resgastes.
+6. Impedir concorrencia na ultima vaga por bloqueio ou atualizacao atomica.
+7. Gerar codigo_cupom unico.
+8. Criar RESGATE com utilizado false.
+9. Definir data_resgate.
+10. Incrementar quantidade_resgates em 1.
+11. Salvar RESGATE e incremento na mesma transacao.
+
+Resposta - 201 Created:
+{
+  "id": 100,
+  "codigoCupom": "UNI-A8KX91",
+  "dataResgate": "2026-09-01T15:00:00",
+  "utilizado": false,
+  "beneficio": {
+    "id": 10,
+    "titulo": "20% de desconto em pizzas",
+    "quantidadeResgates": 26,
+    "quantidadeMaxResgastes": 100,
+    "quantidadeDisponivel": 74,
+    "esgotado": false
+  },
+  "empresa": {
+    "id": 1,
+    "nomeFantasia": "Pizzaria Universitaria"
+  }
+}
+
+Resposta quando esgotado - 422:
+{
+  "status": 422,
+  "error": "Unprocessable Entity",
+  "message": "O limite maximo de resgates deste beneficio foi atingido."
+}
+
+Erros:
+- 403: usuario nao possui perfil ESTUDANTE.
+- 404: beneficio nao encontrado.
+- 409: estudante ja resgatou, caso exista limite por estudante.
+- 422: beneficio inativo, fora da vigencia ou esgotado.
+
+
+6.2 HISTORICO DO ESTUDANTE
+--------------------------
+
+Historia:
+COMO ESTUDANTE,
+QUERO visualizar meu historico de resgates,
+PARA acompanhar os beneficios que ja utilizei.
+
+Endpoint:
+GET /api/resgates/me
+
+Acesso:
+Autenticado como ESTUDANTE.
+
+Parametros opcionais:
+- utilizado
+- page
+- size
+
+Resposta - 200 OK:
+{
+  "content": [
+    {
+      "id": 100,
+      "codigoCupom": "UNI-A8KX91",
+      "dataResgate": "2026-09-01T15:00:00",
+      "utilizado": false,
+      "beneficio": {
+        "id": 10,
+        "titulo": "20% de desconto em pizzas",
+        "dataFim": "2026-12-31"
+      },
+      "empresa": {
+        "id": 1,
+        "nomeFantasia": "Pizzaria Universitaria"
+      }
+    }
+  ],
+  "page": 0,
+  "size": 10,
+  "totalElements": 1,
+  "totalPages": 1
+}
+
+
+6.3 CONSULTAR RESGATE
+---------------------
+
+Endpoint:
+GET /api/resgates/{resgateId}
+
+Acesso:
+- ESTUDANTE dono do resgate.
+- EMPRESA dona do beneficio.
+- ADMIN.
+
+Resposta - 200 OK:
+{
+  "id": 100,
+  "codigoCupom": "UNI-A8KX91",
+  "dataResgate": "2026-09-01T15:00:00",
+  "utilizado": false,
+  "beneficio": {
+    "id": 10,
+    "titulo": "20% de desconto em pizzas"
+  },
+  "empresa": {
+    "id": 1,
+    "nomeFantasia": "Pizzaria Universitaria"
+  }
+}
+
+
+6.4 VALIDAR CUPOM
+-----------------
+
+Historia complementar:
+COMO EMPRESA,
+QUERO validar um cupom resgatado,
+PARA garantir que o beneficio seja utilizado apenas uma vez.
+
+Endpoint:
+POST /api/resgates/validacoes
+
+Acesso:
+Autenticado como EMPRESA.
+
+Dados enviados:
+{
+  "codigoCupom": "UNI-A8KX91"
+}
+
+Regras:
+- O cupom deve existir.
+- O resgate deve pertencer a um beneficio da empresa autenticada.
+- utilizado deve estar false.
+- A operacao altera utilizado para true.
+
+Resposta - 200 OK:
+{
+  "id": 100,
+  "codigoCupom": "UNI-A8KX91",
+  "dataResgate": "2026-09-01T15:00:00",
+  "utilizado": true,
+  "beneficio": {
+    "id": 10,
+    "titulo": "20% de desconto em pizzas"
+  },
+  "estudante": {
+    "id": 1,
+    "nome": "Marcos Aurelio Santos"
+  }
+}
+
+Erros:
+- 403: cupom pertence a outra empresa.
+- 404: cupom nao encontrado.
+- 409: cupom ja utilizado.
+
+
+6.5 GERAR QR CODE (Feature Opcional)
+-----------------
+
+Endpoint opcional:
+GET /api/resgates/{resgateId}/qrcode
+
+Acesso:
+Autenticado como ESTUDANTE dono do resgate.
+
+Resposta - 200 OK:
+Content-Type: image/png
+
+O QR Code deve conter apenas o codigo do cupom ou um identificador seguro, sem dados pessoais.
+
+
+7. METRICAS DA EMPRESA
+======================
+
+Historia:
+COMO EMPRESA,
+QUERO visualizar quantos beneficios foram resgatados,
+PARA acompanhar o impacto da plataforma no meu negocio.
+
+Endpoint:
+GET /api/empresas/me/metricas
+
+Acesso:
+Autenticado como EMPRESA.
+
+Resposta - 200 OK:
+{
+  "empresaId": 1,
+  "nomeFantasia": "Pizzaria Universitaria",
+  "totalBeneficios": 2,
+  "totalBeneficiosAtivos": 2,
+  "totalResgates": 120,
+  "totalCuponsUtilizados": 85,
+  "beneficios": [
+    {
+      "beneficioId": 10,
+      "titulo": "20% de desconto em pizzas",
+      "quantidadeResgates": 80,
+      "quantidadeMaxResgastes": 100,
+      "quantidadeDisponivel": 20,
+      "esgotado": false,
+      "quantidadeCuponsUtilizados": 60
+    },
+    {
+      "beneficioId": 11,
+      "titulo": "Combo universitario",
+      "quantidadeResgates": 40,
+      "quantidadeMaxResgastes": 40,
+      "quantidadeDisponivel": 0,
+      "esgotado": true,
+      "quantidadeCuponsUtilizados": 25
+    }
+  ]
+}
+
+Origem dos dados:
+- totalBeneficios: contagem de BENEFICIO por empresa_id.
+- totalResgates: contagem de RESGATE ou soma de quantidade_resgates.
+- totalCuponsUtilizados: contagem de RESGATE com utilizado true.
+- quantidadeDisponivel: quantidade_max_resgastes menos quantidade_resgates.
+- esgotado: quantidade_resgates maior ou igual a quantidade_max_resgastes.
+
+Recomendacao:
+A tabela RESGATE e a fonte principal para a contagem. quantidade_resgates e um contador redundante e deve ser atualizado na mesma transacao do resgate.
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Se sobrar tempo podemos fazer:
+
+8. ADMINISTRACAO
+================
+
+8.1 LISTAR USUARIOS
+-------------------
+
+Endpoint:
+GET /api/admin/usuarios
+
+Acesso:
+Autenticado como ADMIN.
+
+Parametros:
+- tipoUsuario
+- ativo
+- page
+- size
+
+
+8.2 ATIVAR OU DESATIVAR USUARIO
+--------------------------------
+
+Historia:
+COMO ADMINISTRADOR,
+QUERO desativar empresas ou beneficios que violem as regras,
+PARA manter a confiabilidade da plataforma.
+
+Endpoint:
+PATCH /api/admin/usuarios/{usuarioId}/ativo
+
+Dados enviados:
+{
+  "ativo": false
+}
+
+Resposta - 200 OK:
+{
+  "id": 2,
+  "nome": "Joao Silva",
+  "email": "contato@empresa.com",
+  "tipoUsuario": "EMPRESA",
+  "ativo": false
+}
+
+Regra:
+Beneficios de uma empresa cujo USUARIO esteja inativo nao aparecem publicamente.
+
+
+8.3 ATIVAR OU DESATIVAR BENEFICIO
+----------------------------------
+
+Endpoint:
+PATCH /api/admin/beneficios/{beneficioId}/ativo
+
+Dados enviados:
+{
+  "ativo": false
+}
+
+Resposta - 200 OK:
+{
+  "id": 10,
+  "titulo": "20% de desconto em pizzas",
+  "ativo": false
+}
+
+
+8.4 APROVACAO DE EMPRESA
+------------------------
+
+A historia de aprovacao nao e suportada pelas tabelas atuais, pois EMPRESA nao possui status ou aprovado.
+
+Para manter a historia, adicionar em EMPRESA:
+- status (PENDENTE, APROVADA, REJEITADA)
+
+Rota futura:
+PATCH /api/admin/empresas/{empresaId}/status
+
+
+9. CONTROLE DE CONCORRENCIA NOS RESGATES
+========================================
+
+
+
+Problema: ( Não nos preocupemos com isso agora)
+Dois estudantes podem tentar resgatar a ultima vaga ao mesmo tempo.
+
+Regra obrigatoria:
+A verificacao do limite, a criacao do RESGATE e o incremento de quantidade_resgates devem ocorrer na mesma transacao.
+
+Opcoes de implementacao:
+- Bloqueio pessimista do registro BENEFICIO.
+- Controle otimista com campo de versao.
+- Atualizacao condicional atomica.
+
+Regra equivalente da atualizacao atomica:
+Incrementar quantidade_resgates somente quando:
+quantidade_resgates < quantidade_max_resgastes
+
+Se nenhuma linha for atualizada:
+- nao criar o RESGATE;
+- desfazer a transacao;
+- retornar 422 informando que o beneficio esta esgotado.
+
+Invariante do sistema:
+quantidade_resgates nunca pode ser maior que quantidade_max_resgastes.
+
+
+10. RESUMO DAS ROTAS
+====================
+
+Autenticacao:
+POST   /api/auth/estudantes
+POST   /api/auth/empresas
+POST   /api/auth/login
+
+Empresas:
+GET    /api/empresas
+GET    /api/empresas/{empresaId}
+GET    /api/empresas/me
+PUT    /api/empresas/me
+GET    /api/empresas/me/beneficios
+GET    /api/empresas/me/metricas
+
+Beneficios:
+GET    /api/beneficios
+GET    /api/beneficios/{beneficioId}
+POST   /api/beneficios
+PUT    /api/beneficios/{beneficioId}
+DELETE /api/beneficios/{beneficioId}
+POST   /api/beneficios/{beneficioId}/resgates
+
+Resgates:
+GET    /api/resgates/me
+GET    /api/resgates/{resgateId}
+POST   /api/resgates/validacoes
+GET    /api/resgates/{resgateId}/qrcode
+
+Administracao:
+GET    /api/admin/usuarios
+PATCH  /api/admin/usuarios/{usuarioId}/ativo
+PATCH  /api/admin/beneficios/{beneficioId}/ativo
+
+Rota futura, caso seja adicionado status em EMPRESA:
+PATCH  /api/admin/empresas/{empresaId}/status

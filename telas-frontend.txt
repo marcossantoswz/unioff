@@ -1,0 +1,17 @@
+/ -> home
+├── /beneficios
+│   └── /beneficios/[id]
+│
+├── /empresas
+│   └── /empresas/[id]
+│
+├── /login
+├── /cadastro
+------
+│   ├── /estudante/me/resgates
+│   └── /estudante/me/
+│
+├── /empresa/me
+│   ├── /empresa/me/beneficios
+│   ├── /empresa/me/beneficios/novo
+│   ├── /empresa/me/resgates
