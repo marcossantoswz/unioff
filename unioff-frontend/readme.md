@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Unioff — frontend
 
-## Getting Started
+Next.js 16 (App Router) + React 19 + Tailwind CSS 4.
 
-First, run the development server:
+## Como rodar
+
+1. Suba o backend (`unioff-backend`) na porta 8080.
+2. Aqui na pasta do frontend:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Abra http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Contas de teste criadas pelo `DataInitializer` do backend:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Estudante: `estudante@teste.com` / `senha123`
+- Empresa: `empresa@teste.com` / `senha123`
 
-## Learn More
+## Integração com o backend
 
-To learn more about Next.js, take a look at the following resources:
+O `next.config.ts` faz proxy de `/api/*` para o backend, então o navegador só
+fala com a origem do frontend e não é preciso configurar CORS no Spring. Para
+apontar para outro endereço, defina `BACKEND_URL` (padrão `http://localhost:8080`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+O token JWT do login fica no `localStorage` e vai no header `Authorization`
+de cada requisição (`lib/http.ts`). Se o backend responder 401, a sessão é encerrada.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Estrutura
 
-## Deploy on Vercel
+| Caminho | Conteúdo |
+| --- | --- |
+| `lib/types.ts` | Tipos que espelham os DTOs do backend |
+| `lib/http.ts` | Cliente HTTP, token e tratamento de erros |
+| `lib/api.ts` | Uma função por endpoint |
+| `lib/auth.tsx` | Sessão do usuário (login, logout, perfil) |
+| `components/` | Componentes reutilizáveis (cupom, formulários, tabela) |
+| `app/` | Páginas (rotas do App Router) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Telas
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Rota | Perfil | História de usuário |
+| --- | --- | --- |
+| `/` | todos | Visualizar e pesquisar benefícios |
+| `/beneficios/[id]` | todos / estudante | Ver detalhes e resgatar benefício |
+| `/empresas/[id]` | todos | Ver detalhes, localização e contato da empresa |
+| `/login`, `/cadastro` | visitante | Criar conta (estudante ou empresa) e fazer login |
+| `/meus-cupons` | estudante | Histórico de resgates |
+| `/painel` | empresa | Métricas, listar e desativar benefícios |
+| `/painel/beneficios/novo`, `/painel/beneficios/[id]` | empresa | Cadastrar e editar benefícios |
+| `/painel/validar` | empresa | Validar cupom resgatado |
+| `/painel/perfil` | empresa | Atualizar dados do estabelecimento |

@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-papel: #f5f6f2;
+  --color-tinta: #15203b;
+  --color-carimbo: #2448d8;
+  --color-carimbo-escuro: #1a35a3;
+  --color-marca: #ffd43b;
+  --color-linha: #d6dad0;
+  --color-apagado: #5b6275;
+  --color-erro: #b3261e;
+  --color-ok: #1f7a4d;
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-papel);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-carimbo);
+  outline-offset: 2px;
+}
+
+/* Cupom picotado: dois recortes semicirculares marcam onde o canhoto se separa. */
+.ticket {
+  --canhoto: 6.5rem;
+  --recorte: 9px;
+  background: #fff;
+  border-radius: 8px;
+  -webkit-mask:
+    radial-gradient(circle var(--recorte) at var(--canhoto) 0, #0000 98%, #000)
+      top / 100% 51% no-repeat,
+    radial-gradient(circle var(--recorte) at var(--canhoto) 100%, #0000 98%, #000)
+      bottom / 100% 50% no-repeat;
+  mask:
+    radial-gradient(circle var(--recorte) at var(--canhoto) 0, #0000 98%, #000)
+      top / 100% 51% no-repeat,
+    radial-gradient(circle var(--recorte) at var(--canhoto) 100%, #0000 98%, #000)
+      bottom / 100% 50% no-repeat;
+}
+
+.ticket-sombra {
+  filter: drop-shadow(0 1px 0 var(--color-linha)) drop-shadow(0 0 1px var(--color-linha));
+}
+
+.picote {
+  border-left: 2px dashed var(--color-linha);
+}
+
+@media (max-width: 480px) {
+  .ticket {
+    --canhoto: 5.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
