@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Aviso, Botao, Campo } from "@/components/ui";
+import { Aviso, Botao, Campo, Selecao } from "@/components/ui";
 import { auth } from "@/lib/api";
+import { CURSOS_UFMG } from "@/lib/cursos-ufmg";
+import { INSTITUICOES_FEDERAIS } from "@/lib/instituicoes-federais";
 import type { EstudanteCadastro } from "@/lib/types-cadastro";
 
 interface Props {
@@ -33,9 +35,9 @@ export function CadastroEstudante({ aoCadastrar }: Props) {
       <Campo rotulo="Nome completo" name="nome" autoComplete="name" required />
       <Campo rotulo="E-mail" name="email" type="email" autoComplete="email" required />
       <Campo rotulo="Senha" name="senha" type="password" autoComplete="new-password" minLength={6} required />
-      <Campo rotulo="Instituição" name="instituicao" placeholder="UFMG" required />
+      <Selecao rotulo="Instituição" name="instituicao" opcoes={INSTITUICOES_FEDERAIS} required />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Campo rotulo="Curso" name="curso" required />
+        <Selecao rotulo="Curso" name="curso" opcoes={CURSOS_UFMG} required />
         <Campo rotulo="Matrícula" name="matricula" required />
       </div>
       <Botao type="submit" disabled={enviando}>

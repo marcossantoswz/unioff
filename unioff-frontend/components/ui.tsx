@@ -20,6 +20,24 @@ export function Campo({ rotulo, dica, id, className, ...props }: CampoProps) {
   );
 }
 
+interface SelecaoProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  rotulo: string;
+  opcoes: readonly string[];
+}
+
+export function Selecao({ rotulo, opcoes, id, ...props }: SelecaoProps) {
+  const campoId = id ?? props.name;
+  return (
+    <label htmlFor={campoId} className="flex flex-col gap-1.5">
+      <span className="text-sm font-semibold">{rotulo}</span>
+      <select id={campoId} defaultValue="" className={campoBase} {...props}>
+        <option value="" disabled>Selecione uma opção</option>
+        {opcoes.map((opcao) => <option key={opcao} value={opcao}>{opcao}</option>)}
+      </select>
+    </label>
+  );
+}
+
 interface AreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   rotulo: string;
 }
