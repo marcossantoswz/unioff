@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
+/* Paleta gruvbox (https://github.com/morhetz/gruvbox). Escuro por padrão,
+   variante clara quando o sistema do usuário está em modo claro. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gb-fundo: #282828;
+  --gb-fundo-duro: #1d2021;
+  --gb-superficie: #32302f;
+  --gb-superficie-2: #3c3836;
+  --gb-borda: #504945;
+  --gb-texto: #ebdbb2;
+  --gb-apagado: #a89984;
+  --gb-amarelo: #fabd2f;
+  --gb-laranja: #fe8019;
+  --gb-verde: #b8bb26;
+  --gb-aqua: #8ec07c;
+  --gb-azul: #83a598;
+  --gb-vermelho: #fb4934;
+  --gb-sobre-destaque: #282828;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --gb-fundo: #fbf1c7;
+    --gb-fundo-duro: #f9f5d7;
+    --gb-superficie: #f2e5bc;
+    --gb-superficie-2: #ebdbb2;
+    --gb-borda: #d5c4a1;
+    --gb-texto: #3c3836;
+    --gb-apagado: #7c6f64;
+    --gb-amarelo: #b57614;
+    --gb-laranja: #af3a03;
+    --gb-verde: #79740e;
+    --gb-aqua: #427b58;
+    --gb-azul: #076678;
+    --gb-vermelho: #9d0006;
+    --gb-sobre-destaque: #fbf1c7;
+    color-scheme: light;
   }
 }
 
+@theme inline {
+  --color-fundo: var(--gb-fundo);
+  --color-fundo-duro: var(--gb-fundo-duro);
+  --color-superficie: var(--gb-superficie);
+  --color-superficie-2: var(--gb-superficie-2);
+  --color-borda: var(--gb-borda);
+  --color-texto: var(--gb-texto);
+  --color-apagado: var(--gb-apagado);
+  --color-amarelo: var(--gb-amarelo);
+  --color-laranja: var(--gb-laranja);
+  --color-verde: var(--gb-verde);
+  --color-aqua: var(--gb-aqua);
+  --color-azul: var(--gb-azul);
+  --color-vermelho: var(--gb-vermelho);
+  --color-sobre-destaque: var(--gb-sobre-destaque);
+
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--gb-fundo);
+  color: var(--gb-texto);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gb-amarelo);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--gb-amarelo);
+  color: var(--gb-sobre-destaque);
+}
+
+/* Cupom picotado: dois recortes semicirculares onde o canhoto se separa. */
+.ticket {
+  --canhoto: 6.5rem;
+  --recorte: 9px;
+  background: var(--gb-superficie);
+  border-radius: 6px;
+  -webkit-mask:
+    radial-gradient(circle var(--recorte) at var(--canhoto) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--recorte) at var(--canhoto) 100%, #0000 98%, #000) bottom / 100% 50% no-repeat;
+  mask:
+    radial-gradient(circle var(--recorte) at var(--canhoto) 0, #0000 98%, #000) top / 100% 51% no-repeat,
+    radial-gradient(circle var(--recorte) at var(--canhoto) 100%, #0000 98%, #000) bottom / 100% 50% no-repeat;
+}
+
+.picote {
+  border-left: 2px dashed var(--gb-borda);
+}
+
+@media (max-width: 480px) {
+  .ticket {
+    --canhoto: 5.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
