@@ -17,9 +17,9 @@ public interface EmpresaRepository extends JpaRepository<Empresa, UUID> {
     Optional<Empresa> findByUsuarioEmail(String email);
 
     @Query("SELECT e FROM Empresa e WHERE " +
-           "(:nome IS NULL OR LOWER(e.nomeFantasia) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
-           "(:cidade IS NULL OR LOWER(e.cidade) = LOWER(:cidade)) AND " +
-           "(:bairro IS NULL OR LOWER(e.bairro) = LOWER(:bairro))")
+           "(CAST(:nome AS string) IS NULL OR LOWER(e.nomeFantasia) LIKE LOWER(CONCAT('%', CAST(:nome AS string), '%'))) AND " +
+           "(CAST(:cidade AS string) IS NULL OR LOWER(e.cidade) = LOWER(CAST(:cidade AS string))) AND " +
+           "(CAST(:bairro AS string) IS NULL OR LOWER(e.bairro) = LOWER(CAST(:bairro AS string)))")
     Page<Empresa> findByFiltros(
             @Param("nome") String nome,
             @Param("cidade") String cidade,

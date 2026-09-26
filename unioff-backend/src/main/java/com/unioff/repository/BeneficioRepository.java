@@ -16,8 +16,8 @@ import java.util.UUID;
 public interface BeneficioRepository extends JpaRepository<Beneficio, UUID> {
 
     @Query("SELECT b FROM Beneficio b WHERE b.empresa.usuario.email = :email " +
-           "AND (:ativo IS NULL OR b.ativo = :ativo) " +
-           "AND (:esgotado IS NULL OR " +
+           "AND (CAST(:ativo AS boolean) IS NULL OR b.ativo = :ativo) " +
+           "AND (CAST(:esgotado AS boolean) IS NULL OR " +
            "  (:esgotado = true AND b.quantidadeResgates >= b.quantidadeMaxResgastes) OR " +
            "  (:esgotado = false AND b.quantidadeResgates < b.quantidadeMaxResgastes)" +
            ")")
@@ -40,8 +40,8 @@ public interface BeneficioRepository extends JpaRepository<Beneficio, UUID> {
            "AND b.quantidadeResgates < b.quantidadeMaxResgastes " +
            "AND (b.dataInicio IS NULL OR b.dataInicio <= CURRENT_DATE) " +
            "AND (b.dataFim IS NULL OR b.dataFim >= CURRENT_DATE) " +
-           "AND (:busca IS NULL OR LOWER(b.titulo) LIKE LOWER(CONCAT('%', :busca, '%')) OR LOWER(b.descricao) LIKE LOWER(CONCAT('%', :busca, '%'))) " +
-           "AND (:empresaId IS NULL OR b.empresa.id = :empresaId)")
+           "AND (CAST(:busca AS string) IS NULL OR LOWER(b.titulo) LIKE LOWER(CONCAT('%', CAST(:busca AS string), '%')) OR LOWER(b.descricao) LIKE LOWER(CONCAT('%', CAST(:busca AS string), '%'))) " +
+           "AND (CAST(:empresaId AS uuid) IS NULL OR b.empresa.id = :empresaId)")
     Page<Beneficio> findBeneficiosFeed(
             @Param("busca") String busca,
             @Param("empresaId") UUID empresaId,
