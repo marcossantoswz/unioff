@@ -17,6 +17,24 @@ export function CadastroEmpresa({ aoCadastrar }: Props) {
     e.preventDefault();
     const dados = Object.fromEntries(new FormData(e.currentTarget)) as unknown as EmpresaCadastro;
     setErro("");
+
+    // Validação manual básica
+    const cnpjLimpo = dados.cnpj.replace(/\D/g, "");
+    if (cnpjLimpo.length !== 14) {
+      setErro("O CNPJ deve conter exatamente 14 números.");
+      return;
+    }
+    dados.cnpj = cnpjLimpo;
+
+    if (dados.telephoneWhatsapp) {
+      const telefoneLimpo = dados.telephoneWhatsapp.replace(/\D/g, "");
+      if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+        setErro("O WhatsApp deve conter o DDD e o número (ex: 31999999999).");
+        return;
+      }
+      dados.telephoneWhatsapp = telefoneLimpo;
+    }
+
     setEnviando(true);
     try {
       await auth.cadastrarEmpresa(dados);
@@ -38,9 +56,17 @@ export function CadastroEmpresa({ aoCadastrar }: Props) {
       </fieldset>
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-2 mt-4 font-display text-lg font-semibold">Estabelecimento</legend>
-        <Campo rotulo="Nome do estabelecimento" name="nomeFantasia" required />
-        <Campo rotulo="CNPJ" name="cnpj" inputMode="numeric" required />
-        <AreaTexto rotulo="O que vocês oferecem" name="descricao" />
+        <Campo rotulo="Nome do estabelecimento" name="nomeFantasia" required minLength={2} />
+        <Campo 
+          rotulo="CNPJ" 
+          name="cnpj" 
+          inputMode="numeric" 
+          placeholder="00.000.000/0000-00"
+          pattern="[\d\.\-\/]{14,18}" 
+          title="Digite o CNPJ no formato 00.000.000/0000-00 ou apenas números"
+          required 
+        />
+        <AreaTexto rotulo="O que vocês oferecem" name="descricao" minLength={10} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Campo rotulo="Cidade" name="cidade" required />
           <Campo rotulo="Bairro" name="bairro" required />
@@ -49,8 +75,15 @@ export function CadastroEmpresa({ aoCadastrar }: Props) {
           <Campo rotulo="Rua" name="logradouro" required />
           <Campo rotulo="Número" name="numero" required />
         </div>
-        <Campo rotulo="WhatsApp" name="telephoneWhatsapp" type="tel" placeholder="(31) 99999-9999" />
-        <Campo rotulo="Site ou Instagram" name="site" />
+        <Campo 
+          rotulo="WhatsApp" 
+          name="telephoneWhatsapp" 
+          type="tel" 
+          placeholder="(31) 99999-9999"
+          pattern="[\d\s\-\(\)]{10,15}"
+          title="Digite o telefone com DDD"
+        />
+        <Campo rotulo="Site ou Instagram" name="site" type="url" placeholder="https://..." />
       </fieldset>
       <Botao type="submit" disabled={enviando}>
         {enviando ? "Criando conta…" : "Criar conta de empresa"}
