@@ -42,8 +42,8 @@ de cada requisição (`lib/http.ts`). Se o backend responder 401, a sessão é e
 
 ## Visual
 
-Paleta [gruvbox](https://github.com/morhetz/gruvbox): escura por padrão e clara quando o sistema
-está em modo claro. As cores ficam em variáveis no `app/globals.css`.
+Paleta [gruvbox](https://github.com/morhetz/gruvbox) na variante clara. As cores ficam em variáveis
+no `app/globals.css`; para trocar de tema, basta mudar os valores de `:root`.
 
 ## Telas
 
