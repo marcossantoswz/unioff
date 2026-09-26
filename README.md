@@ -55,21 +55,31 @@ O Unioff é uma plataforma de benefícios estudantis que conecta estudantes a es
 
 ## Arquitetura do Sistema
 
-O sistema utiliza uma arquitetura em camadas, promovendo a separação de responsabilidades e facilitando a manutenção e evolução da aplicação.
+O sistema utiliza uma arquitetura separada em camadas lógicas e dividida entre o cliente (Frontend) e o servidor (Backend) para garantir escabilidade, manutenção simplificada e clara separação de responsabilidades. A comunicação entre as partes se dá por meio de uma API REST.
 
-### Backend
+```mermaid
+flowchart TD
+    subgraph Frontend [Frontend - Next.js / React]
+        UI[Interface de Usuário] --> Pages[Páginas & Componentes]
+        Pages --> API_Client[Cliente API]
+    end
 
-```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-Banco de Dados (PostgreSQL)
+    subgraph Backend [Backend - Spring Boot]
+        Controller[Controllers\nEndpoints REST] --> Service[Services\nRegras de Negócio]
+        Service --> Repository[Repositories\nAcesso a Dados]
+    end
+
+    subgraph Banco [Banco de Dados]
+        PostgreSQL[(PostgreSQL)]
+    end
+
+    API_Client -- "HTTP / JSON" --> Controller
+    Repository -- "Spring Data JPA" --> PostgreSQL
 ```
 
 ## Entidades
+
+O diagrama de classes abaixo detalha o modelo de domínio do sistema. Ele ilustra as entidades principais, seus atributos essenciais e os relacionamentos estruturais entre os perfis de usuários (Estudantes e Empresas), os benefícios disponíveis no catálogo e a mecânica de resgate através de cupons.
 
 ```mermaid
 classDiagram
@@ -143,8 +153,80 @@ classDiagram
     Estudante "1" -- "0..*" Cupom : resgata
     Beneficio "1" *-- "0..*" Cupom : cupons
 ```
+---
 
-### Frontend (a definir)
+## Fluxos Principais
+
+O diagrama de sequência abaixo ilustra o fluxo mais crítico e importante do negócio: o **Resgate de Benefício**. Ele detalha a comunicação entre o cliente, a API e o banco de dados, incluindo as regras de validação necessárias antes da geração do cupom.
+
+### Diagrama de Sequência: Resgate de Benefício
+
+```mermaid
+%%{init: {'themeVariables': { 'fontSize': '16px', 'fontFamily': 'arial' }}}%%
+sequenceDiagram
+    autonumber
+    actor Estudante
+    participant Frontend as Frontend
+    participant API as API (Spring)
+    participant Service as CupomService
+    participant Repo as Repository
+    participant DB as PostgreSQL
+
+    Estudante->>Frontend: Clica em "Resgatar"
+    Frontend->>API: POST /resgates (JWT)
+    
+    API->>Service: resgatar(beneficioId)
+    
+    Service->>Repo: Busca Benefício
+    Repo->>DB: Query SELECT
+    DB-->>Repo: ResultSet
+    Repo-->>Service: Entidade Benefício
+    
+    alt Benefício Inválido
+        Service-->>API: Exception
+        API-->>Frontend: HTTP 400
+        Frontend-->>Estudante: Erro: Indisponível
+    else Benefício Válido
+        Service->>Repo: existsByEstudante()
+        Repo->>DB: Query EXISTS
+        DB-->>Repo: Resultado
+        Repo-->>Service: boolean
+        
+        alt Resgate Duplicado
+            Service-->>API: Exception
+            API-->>Frontend: HTTP 400
+            Frontend-->>Estudante: Erro: Duplicado
+        else Pode resgatar
+            Service->>Repo: countByBeneficio()
+            Repo->>DB: Query COUNT
+            DB-->>Repo: Resultado
+            Repo-->>Service: Contagem atual
+            
+            alt Limite Atingido
+                Service-->>API: Exception
+                API-->>Frontend: HTTP 400
+                Frontend-->>Estudante: Erro: Esgotado
+            else Limite Disponível
+                Service->>Service: Gera Código (UNI-...)
+                
+                Service->>Repo: save(Cupom)
+                Repo->>DB: Query INSERT
+                DB-->>Repo: OK
+                
+                Service->>Repo: update(Beneficio)
+                Repo->>DB: Query UPDATE
+                DB-->>Repo: OK
+                
+                Repo-->>Service: Entidades persistidas
+                
+                Service-->>API: JSON do Cupom
+                API-->>Frontend: HTTP 201 Created
+                Frontend-->>Estudante: Exibe Código!
+            end
+        end
+    end
+```
+
 ---
 
 ## Histórias de usuários
@@ -165,6 +247,3 @@ classDiagram
 - COMO EMPRESA, QUERO validar um cupom resgatado, PARA garantir que o beneficio seja utilizado apenas uma vez.
 - COMO EMPRESA, QUERO visualizar quantos beneficios foram resgatados, PARA acompanhar o impacto da plataforma no meu negocio.
 - COMO ADMINISTRADOR, QUERO desativar empresas ou beneficios que violem as regras, PARA manter a confiabilidade da plataforma.
-
-
-
