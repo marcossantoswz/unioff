@@ -13,6 +13,7 @@ O Unioff é uma plataforma de benefícios estudantis que conecta estudantes a es
 | Leonardo Barreto | Full Stack |
 | Marcos Aurélio Santos | Full Stack |
 | Marcelo Eugênio Campos | Full Stack |
+| Joao Victor Guilherme Teixeira | Frontend |
 
 ---
 
