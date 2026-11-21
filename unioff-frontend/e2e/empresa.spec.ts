@@ -1,6 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-test("fluxo E2E da empresa: login, consulta, edicao e pagina publica", async ({ page }) => {
+test("fluxo E2E da empresa: login, consulta, edicao e pagina publica", async ({ page, request }) => {
+  await expect(async () => {
+    const response = await request.post("/api/auth/login", {
+      data: {
+        email: "empresa@teste.com",
+        senha: "senha123",
+      },
+    });
+    expect(response.status()).toBe(200);
+  }).toPass({ timeout: 30_000 });
+
   await page.goto("/login");
 
   await page.locator('input[name="email"]').fill("empresa@teste.com");

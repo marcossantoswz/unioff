@@ -16,7 +16,7 @@ export default defineConfig({
   webServer: [
     {
       command:
-        "mvn -f ../unioff-backend/pom.xml spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=test",
+        "cd ../unioff-backend && ./mvnw spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=test",
       url: "http://localhost:8080/api/empresas",
       reuseExistingServer: true,
       timeout: 120_000,
