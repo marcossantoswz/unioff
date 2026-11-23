@@ -77,4 +77,46 @@ class BeneficioIntegrationTest {
                 .andExpect(jsonPath("$.ativo").value(false));
         assertFalse(beneficioRepository.findById(id).orElseThrow().isAtivo());
     }
+
+    @Test
+    @WithMockUser(username = EMPRESA, roles = "EMPRESA")
+    void cadastroInvalidoRetorna400ComMensagemDoDto() throws Exception {
+        String invalido = payloadNovo("").replace("\"quantidadeMaxResgastes\": 15", "\"quantidadeMaxResgastes\": 0");
+
+        mockMvc.perform(post("/api/beneficios")
+                        .contentType(MediaType.APPLICATION_JSON).content(invalido))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").isString())
+                .andExpect(jsonPath("$.path").value("/api/beneficios"));
+        assertEquals(0, beneficioRepository.findAll().stream().filter(b -> b.getTitulo().isBlank()).count());
+    }
+
+    @Test
+    void beneficioInexistenteRetorna404ESemLoginRetorna401() throws Exception {
+        mockMvc.perform(get("/api/beneficios/{id}", UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.startsWith("Benefício não encontrado")));
+
+        mockMvc.perform(post("/api/beneficios")
+                        .contentType(MediaType.APPLICATION_JSON).content(payloadNovo("Sem login")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = EMPRESA, roles = "EMPRESA")
+    void feedPublicoEncontraPorBuscaEEscondeDesativados() throws Exception {
+        UUID id = criarViaApi("Sobremesa surpresa da integracao");
+
+        mockMvc.perform(get("/api/beneficios").param("busca", "SURPRESA DA INTEGRACAO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(id.toString()));
+
+        mockMvc.perform(delete("/api/beneficios/{id}", id)).andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/beneficios").param("busca", "surpresa da integracao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
 }
