@@ -97,4 +97,64 @@ class BeneficioServiceTest {
         assertTrue(pagina.getContent().get(0).getEsgotado());
         assertEquals(0, pagina.getContent().get(0).getQuantidadeDisponivel());
     }
+
+    @Test
+    void atualizarAplicaSomenteCamposInformados() {
+        when(beneficioRepository.findById(beneficio.getId())).thenReturn(Optional.of(beneficio));
+        when(beneficioRepository.save(any(Beneficio.class))).thenAnswer(inv -> inv.getArgument(0));
+        BeneficioUpdateDTO dto = new BeneficioUpdateDTO();
+        dto.setTitulo("15% OFF"); dto.setQuantidadeMaxResgastes(8); dto.setAtivo(false);
+
+        BeneficioResponseDTO resposta = service.atualizarBeneficio(beneficio.getId(), EMAIL_DONA, dto);
+
+        assertEquals("15% OFF", resposta.getTitulo());
+        assertEquals("Almoco", resposta.getDescricao());
+        assertEquals(6, resposta.getQuantidadeDisponivel());
+        assertFalse(resposta.getAtivo());
+    }
+
+    @Test
+    void atualizarRecusaIdInexistenteOutraEmpresaEDatasInvertidas() {
+        BeneficioUpdateDTO dto = new BeneficioUpdateDTO();
+        UUID inexistente = UUID.randomUUID();
+        when(beneficioRepository.findById(inexistente)).thenReturn(Optional.empty());
+        assertThrows(BeneficioNotFoundException.class,
+                () -> service.atualizarBeneficio(inexistente, EMAIL_DONA, dto));
+
+        when(beneficioRepository.findById(beneficio.getId())).thenReturn(Optional.of(beneficio));
+        assertThrows(SecurityException.class,
+                () -> service.atualizarBeneficio(beneficio.getId(), "outra@empresa.com", dto));
+
+        dto.setDataFim(beneficio.getDataInicio().minusDays(1));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.atualizarBeneficio(beneficio.getId(), EMAIL_DONA, dto));
+        verify(beneficioRepository, never()).save(any());
+    }
+
+    @Test
+    void excluirDesativaQuandoDonoOuAdmin() {
+        when(beneficioRepository.findById(beneficio.getId())).thenReturn(Optional.of(beneficio));
+
+        service.excluirBeneficio(beneficio.getId(), EMAIL_DONA, false);
+        assertFalse(beneficio.isAtivo());
+
+        beneficio.setAtivo(true);
+        service.excluirBeneficio(beneficio.getId(), "admin@unioff.com", true);
+        assertFalse(beneficio.isAtivo());
+        verify(beneficioRepository, times(2)).save(beneficio);
+    }
+
+    @Test
+    void excluirRecusaQuemNaoEDonoNemAdminEIdInexistente() {
+        when(beneficioRepository.findById(beneficio.getId())).thenReturn(Optional.of(beneficio));
+        assertThrows(SecurityException.class,
+                () -> service.excluirBeneficio(beneficio.getId(), "outra@empresa.com", false));
+        assertTrue(beneficio.isAtivo());
+
+        UUID inexistente = UUID.randomUUID();
+        when(beneficioRepository.findById(inexistente)).thenReturn(Optional.empty());
+        assertThrows(BeneficioNotFoundException.class,
+                () -> service.excluirBeneficio(inexistente, EMAIL_DONA, true));
+        verify(beneficioRepository, never()).save(any());
+    }
 }
