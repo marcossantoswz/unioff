@@ -52,7 +52,7 @@ public class CupomService {
         }
 
         Cupom cupom = new Cupom();
-        cupom.setCodigo("UNI-" + UUID.randomUUID().toString().replace("-", ""));
+        cupom.setCodigo("UNI-" + UUID.randomUUID().toString().replace("-", "").toUpperCase());
         cupom.setDataGeracao(LocalDateTime.now());
         cupom.setEstudante(estudante);
         cupom.setBeneficio(beneficio);
